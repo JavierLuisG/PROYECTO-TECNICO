@@ -28,6 +28,8 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
+    # Tabla de historial propia para evitar conflicto con ms-cliente en la misma BD
+    table: flyway_schema_history_cuenta
   
   # RabbitMQ
   rabbitmq:
