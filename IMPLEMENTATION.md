@@ -255,7 +255,7 @@ build(ms-cuenta): add JPA, RabbitMQ, Flyway and Lombok dependencies
 
 ---
 
-### Bloque 2 — Estructura DDD + modelos + exception handler → TASK-12, TASK-13, TASK-14
+### Bloque 2 — Estructura DDD + modelos → TASK-12, TASK-13
 
 **Claude implementa:**
 - Estructura de paquetes completa en `ms-cuenta`
@@ -263,11 +263,10 @@ build(ms-cuenta): add JPA, RabbitMQ, Flyway and Lombok dependencies
 - `domain/valueobject/Saldo.java`, `NumeroCuenta.java`, `TipoCuenta.java`
 - `domain/exception/SaldoInsuficienteException.java`, `CuentaNotFoundException.java`
 - Entidades JPA, mappers, repositorios
-- `infrastructure/web/exception/GlobalExceptionHandler.java`
 
 **Commit:**
 ```
-chore(ms-cuenta): setup DDD hexagonal structure, domain models and exception handler
+chore(ms-cuenta): setup DDD hexagonal structure and domain models
 ```
 
 ---
@@ -300,7 +299,6 @@ completa de dependencias, estructura DDD + Hexagonal y el CRUD REST de cuentas.
 - Closes #13 — TASK-12: Estructura DDD + Hexagonal MS-Cuenta
 - Closes #14 — TASK-13: Modelos de dominio y entidades JPA Cuenta/Movimiento/ClienteRef
 - Closes #15 — US-02:   CRUD de cuentas (POST, GET, PUT, DELETE /api/cuentas)
-- Closes #18 — TASK-14: Global exception handler REST con SaldoInsuficienteException
 
 ## Cómo probar
 ```bash
@@ -329,17 +327,18 @@ git checkout develop
 git checkout -b feat/US-03-registrar-movimiento
 ```
 
-### Bloque 1 — Registrar movimiento + CRUD movimientos → US-03
+### Bloque 1 — Exception handler + Registrar movimiento → TASK-14, US-03
 
 **Claude implementa:**
+- `infrastructure/web/exception/GlobalExceptionHandler.java` — handlers para `SaldoInsuficienteException` (400 "Saldo no disponible"), `EntityNotFoundException` (404), `BusinessException` (400), `MethodArgumentNotValidException` (400)
 - `application/port/in/RegistrarMovimientoUseCase.java`
-- `application/service/MovimientoService.java` — lógica transaccional ACID
+- `application/service/MovimientoService.java` — lógica transaccional ACID con lock pesimista
 - `infrastructure/web/controller/MovimientoController.java`
 - DTOs y mappers de Movimiento
 
 **Commit:**
 ```
-feat(ms-cuenta): add movement registration with balance validation and ACID transaction
+feat(ms-cuenta): add global exception handler and movement registration with balance validation
 ```
 
 ---
@@ -372,6 +371,7 @@ y la integración asincrónica bidireccional con RabbitMQ. Lógica crítica con
 transacción ACID y lock pesimista para garantizar consistencia.
 
 ## Cambios incluidos
+- Closes #18 — TASK-14: Global exception handler REST con SaldoInsuficienteException
 - Closes #16 — US-03:   Registrar movimiento con validación de saldo ("Saldo no disponible")
 - Closes #19 — TASK-15: Consumer evento cliente-creado → sincroniza ClienteRef
 - Closes #20 — TASK-16: Publisher evento movimiento-registrado
@@ -783,8 +783,8 @@ psql -U postgres -d banco_test -f backend/BaseDatos.sql
 |---|---|---|
 | `feat/database-setup` | 3 | #1, #2, #3, #4 |
 | `feat/US-01-gestion-clientes` | 4 | #5, #6, #7, #8, #9, #10, #11 |
-| `feat/US-02-gestion-cuentas` | 3 | #12, #13, #14, #15, #18 |
-| `feat/US-03-registrar-movimiento` | 2 | #16, #19, #20 |
+| `feat/US-02-gestion-cuentas` | 3 | #12, #13, #14, #15 |
+| `feat/US-03-registrar-movimiento` | 2 | #18, #16, #19, #20 |
 | `feat/US-04-reporte-cuenta` | 2 | #17, #21 |
 | `feat/US-05-listado-productos` | 2 | #22, #23 |
 | `feat/US-06-crear-producto` | 1 | #24 |

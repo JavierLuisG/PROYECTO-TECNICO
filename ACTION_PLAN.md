@@ -263,6 +263,15 @@ infrastructure/
 - [ ] DELETE devuelve 400 si la cuenta tiene movimientos
 - [ ] Respuestas según `docs/API_BACKEND.md`
 
+### TASK-14: Global Exception Handler — MS-Cuenta
+
+Igual que TASK-07. Incluir handler específico para `SaldoInsuficienteException` → 400 con `"Saldo no disponible"`.
+
+**Archivo a crear**: `infrastructure/web/exception/GlobalExceptionHandler.java`
+
+> Se implementa en esta posición porque `SaldoInsuficienteException` es el handler diferencial
+> que solo cobra sentido junto con US-03. Misma relación que TASK-07 con US-01.
+
 ### US-03: Registrar Movimiento (F2 + F3) ⭐
 
 > Spec completa: [`docs/user-stories/US-03-registrar-movimiento.md`](docs/user-stories/US-03-registrar-movimiento.md)
@@ -283,10 +292,6 @@ infrastructure/
 - [ ] El saldo no cambia si el movimiento falla
 - [ ] Depósito y retiro con saldo suficiente → 201 con saldos coherentes
 - [ ] GET, PUT, DELETE `/api/movimientos/{id}` funcionan
-
-### TASK-14: Global Exception Handler — MS-Cuenta
-
-Igual que TASK-07. Incluir handler específico para `SaldoInsuficienteException` → 400 con `"Saldo no disponible"`.
 
 ### TASK-15: Consumer `cliente-creado` — MS-Cuenta
 
