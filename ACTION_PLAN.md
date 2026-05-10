@@ -284,20 +284,6 @@ infrastructure/
 - [ ] Depósito y retiro con saldo suficiente → 201 con saldos coherentes
 - [ ] GET, PUT, DELETE `/api/movimientos/{id}` funcionan
 
-### US-04: Reporte Estado de Cuenta (F4) ⭐
-
-> Spec completa: [`docs/user-stories/US-04-reporte-estado-cuenta.md`](docs/user-stories/US-04-reporte-estado-cuenta.md)
-
-**Como** cliente del banco  
-**Quiero** consultar el estado de mis cuentas y movimientos en un período  
-**Para** revisar mi historial financiero
-
-**Criterios de aceptación**:
-- [ ] GET `/api/reportes?clienteId=X&desde=YYYY-MM-DD&hasta=YYYY-MM-DD`
-- [ ] Respuesta incluye nombre del cliente (de `ClienteRef`)
-- [ ] Sin `desde`/`hasta` usa inicio de año y hoy como defaults
-- [ ] Cuentas sin movimientos en el rango aparecen con lista vacía
-
 ### TASK-14: Global Exception Handler — MS-Cuenta
 
 Igual que TASK-07. Incluir handler específico para `SaldoInsuficienteException` → 400 con `"Saldo no disponible"`.
@@ -317,6 +303,20 @@ Igual que TASK-07. Incluir handler específico para `SaldoInsuficienteException`
 **Criterios de aceptación**:
 - [ ] Publica al `movimiento-registrado-exchange` tras movimiento exitoso
 - [ ] Payload: `{ movimientoId, cuentaId, valor, saldoActual, fecha }`
+
+### US-04: Reporte Estado de Cuenta (F4) ⭐
+
+> Spec completa: [`docs/user-stories/US-04-reporte-estado-cuenta.md`](docs/user-stories/US-04-reporte-estado-cuenta.md)
+
+**Como** cliente del banco  
+**Quiero** consultar el estado de mis cuentas y movimientos en un período  
+**Para** revisar mi historial financiero
+
+**Criterios de aceptación**:
+- [ ] GET `/api/reportes?clienteId=X&desde=YYYY-MM-DD&hasta=YYYY-MM-DD`
+- [ ] Respuesta incluye nombre del cliente (de `ClienteRef`)
+- [ ] Sin `desde`/`hasta` usa inicio de año y hoy como defaults
+- [ ] Cuentas sin movimientos en el rango aparecen con lista vacía
 
 ### TASK-17: Test de integración — MS-Cuenta (F6 deseable)
 
