@@ -1,286 +1,234 @@
-# Frontend - Aplicación Web de Productos Financieros
+# Frontend — Catálogo de Productos Financieros
 
-Aplicación **Next.js 16.2.6** con **React 19.2.4** y **TypeScript 5**, siguiendo **arquitectura limpia**.
+Aplicación **Next.js 16.2.6** con **React 19** y **TypeScript 5**, siguiendo **arquitectura limpia** por capas.
 
-## 🏛️ Arquitectura Limpia
+Consume el API Node.js en `http://localhost:3002` (backend provisto por el ejercicio, no forma parte del stack Docker bancario).
+
+---
+
+## Funcionalidades (SemiSenior)
+
+| Feature | Estado | Descripción |
+|---|---|---|
+| F1 | Pendiente | Listado de productos financieros |
+| F2 | Pendiente | Búsqueda por texto |
+| F3 | Pendiente | Contador de registros |
+| F4 | Pendiente | Agregar producto (formulario con validaciones) |
+| F5 | Pendiente (deseable) | Editar producto |
+
+---
+
+## Arquitectura por capas
 
 ```
 src/
-├── presentation/       # UI - Componentes React, páginas Next.js
-├── application/        # Lógica de aplicación - Casos de uso, servicios
-├── domain/            # Lógica de negocio - Modelos, interfaces
-└── infrastructure/    # Acceso a datos externo - API calls, servicios
+├── domain/
+│   └── models/            ← Product.ts — interfaz de dominio pura
+│
+├── application/
+│   ├── usecases/          ← listProducts.ts, createProduct.ts, updateProduct.ts, deleteProduct.ts
+│   └── hooks/             ← useProducts.ts, useProductForm.ts, useSearch.ts
+│
+├── infrastructure/
+│   └── api/               ← productService.ts — fetch al API :3002
+│
+└── presentation/
+    ├── components/        ← ProductCard, ProductList, SearchBar, RecordCount, Modal, ProductForm
+    └── styles/            ← CSS Modules por componente (sin frameworks de estilos)
 ```
 
-**Ventajas**:
-- Separación clara de responsabilidades
-- Fácil de testear (mockear servicios)
-- Reutilizable (cambiar API no afecta UI)
+**Regla de dependencia**: `presentation` → `application` → `domain`. `infrastructure` es llamado desde `application`.
 
-## 🎯 Funcionalidades (Requerimientos)
+> **Nota sobre estilos**: El ejercicio exige implementación sin frameworks de estilos ni componentes prefabricados. Se usa **CSS Modules** propio para respetar la restricción. Tailwind no se utiliza aunque esté en el proyecto.
 
-| Feature | Status | Descripción |
-|---------|--------|-------------|
-| **F1** | ✅ | Listado de productos financieros |
-| **F2** | ✅ | Búsqueda de productos por texto |
-| **F3** | ✅ | Mostrar cantidad de registros |
-| **F4** | ✅ | Agregar producto (formulario con validaciones) |
-| **F5** | 🔄 | Editar producto |
-| **F6** | 🔄 | Eliminar producto (modal confirmación) |
+---
 
-## 📁 Estructura del Proyecto
+## Estructura de archivos
 
 ```
 frontend/
 ├── src/
-│   ├── app/                        # Next.js app/ router
-│   │   ├── layout.tsx             # Layout principal
-│   │   ├── page.tsx               # Home / Listado productos
-│   │   ├── productos/
-│   │   │   ├── page.tsx           # Página de productos
-│   │   │   ├── [id]/
-│   │   │   │   └── page.tsx       # Detalle de producto
-│   │   │   └── crear/
-│   │   │       └── page.tsx       # Formulario crear
-│   │   └── editar/
+│   ├── app/                        # Next.js App Router
+│   │   ├── layout.tsx
+│   │   ├── page.tsx                # Home → listado + búsqueda
+│   │   └── products/
+│   │       ├── new/
+│   │       │   └── page.tsx        # Formulario crear (F4)
 │   │       └── [id]/
-│   │           └── page.tsx       # Formulario editar
+│   │           └── edit/
+│   │               └── page.tsx    # Formulario editar (F5)
 │   │
-│   ├── presentation/              # Componentes UI
-│   │   ├── components/
-│   │   │   ├── ProductCard.tsx
-│   │   │   ├── ProductForm.tsx
-│   │   │   ├── SearchBar.tsx
-│   │   │   └── Modal.tsx
-│   │   └── styles/               # Tailwind CSS globals
+│   ├── domain/
+│   │   └── models/
+│   │       └── Product.ts
 │   │
-│   ├── application/              # Casos de uso, lógica
+│   ├── application/
 │   │   ├── usecases/
-│   │   │   ├── ListProductsUseCase.ts
-│   │   │   ├── SearchProductsUseCase.ts
-│   │   │   ├── GetProductUseCase.ts
-│   │   │   ├── CreateProductUseCase.ts
-│   │   │   └── UpdateProductUseCase.ts
-│   │   └── hooks/                # Custom React hooks
+│   │   │   ├── listProducts.ts
+│   │   │   ├── createProduct.ts
+│   │   │   ├── updateProduct.ts
+│   │   │   └── deleteProduct.ts
+│   │   └── hooks/
 │   │       ├── useProducts.ts
 │   │       ├── useProductForm.ts
 │   │       └── useSearch.ts
 │   │
-│   ├── domain/                   # Modelos y interfaces
-│   │   ├── models/
-│   │   │   └── Product.ts
-│   │   └── interfaces/
-│   │       └── IProductRepository.ts
+│   ├── infrastructure/
+│   │   └── api/
+│   │       └── productService.ts
 │   │
-│   ├── infrastructure/           # Servicios externos
-│   │   ├── api/
-│   │   │   └── productService.ts (API calls)
-│   │   └── repositories/
-│   │       └── ProductRepository.ts
-│   │
-│   └── utils/                    # Funciones helper
-│       ├── validation.ts
-│       └── formatters.ts
+│   └── presentation/
+│       ├── components/
+│       │   ├── ProductList/
+│       │   │   ├── ProductList.tsx
+│       │   │   └── ProductList.module.css
+│       │   ├── ProductCard/
+│       │   ├── SearchBar/
+│       │   ├── RecordCount/
+│       │   ├── ProductForm/
+│       │   └── Modal/
+│       └── styles/
+│           └── globals.css
 │
-├── public/                       # Archivos estáticos
-├── __tests__/                    # Tests Jest
+├── __tests__/                      # Tests Jest
+│   ├── usecases/
+│   ├── components/
+│   └── hooks/
+│
 ├── package.json
 ├── tsconfig.json
-├── next.config.js
-├── tailwind.config.js
-└── README.md (este archivo)
+└── next.config.ts
 ```
 
-## 🚀 Levantar Frontend
+---
+
+## API que consume
+
+Backend Node.js (externo al proyecto Docker), puerto **3002**.
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | `/bp/products` | Listar todos |
+| POST | `/bp/products` | Crear producto |
+| PUT | `/bp/products/:id` | Actualizar producto |
+| DELETE | `/bp/products/:id` | Eliminar producto |
+| GET | `/bp/products/verification/:id` | Verificar si el ID ya existe |
+
+Ver spec completa en [`../docs/API_FRONTEND.md`](../docs/API_FRONTEND.md).
+
+### Iniciar el backend Node.js
+
+```bash
+# En la carpeta del proyecto provisto por el ejercicio:
+npm install
+npm run start:dev
+# Disponible en http://localhost:3002
+```
+
+---
+
+## Modelo de producto
+
+```typescript
+interface Product {
+  id: string;           // Identificador único (3-10 chars)
+  name: string;         // Nombre (5-100 chars)
+  description: string;  // Descripción (10-200 chars)
+  logo: string;         // URL del logo
+  date_release: string; // YYYY-MM-DD, ≥ hoy
+  date_revision: string;// YYYY-MM-DD, exactamente 1 año después de date_release
+}
+```
+
+---
+
+## Validaciones del formulario (F4)
+
+| Campo | Regla |
+|---|---|
+| `id` | Requerido, 3-10 chars, no debe existir (`/verification/:id`) |
+| `name` | Requerido, 5-100 chars |
+| `description` | Requerido, 10-200 chars |
+| `logo` | Requerido |
+| `date_release` | Requerido, fecha ≥ hoy |
+| `date_revision` | Requerido, auto-calculado: exactamente 1 año después de `date_release` |
+
+---
+
+## Levantar el frontend
 
 ### Con Docker Compose
 
 ```bash
-cd ../  # Ir a raíz del proyecto
-docker-compose up -d
+# Desde raíz del proyecto:
+docker compose up frontend -d
+# Disponible en http://localhost:3000
 ```
 
-Accede en http://localhost:3000
-
 ### Local sin Docker
-
-**Requisitos**:
-- Node.js 20.x
-- npm o yarn
-
-**Pasos**:
 
 ```bash
 cd frontend
 npm install
 npm run dev
+# Disponible en http://localhost:3000
 ```
 
-Accede en http://localhost:3000
-
-## 🔌 API Configuration
-
-El frontend consume API backend en `http://localhost:3002` (Node.js aparte).
-
-**Configurar en `.env.local`**:
+**Variables de entorno** (`.env.local`):
 
 ```
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3002
 ```
 
-## 📝 Páginas y Rutas
+---
 
-| Ruta | Página | Componentes |
-|------|--------|------------|
-| `/` | Home | Lista de productos |
-| `/productos` | Productos | Listado con búsqueda |
-| `/productos/[id]` | Detalle | Información completa |
-| `/productos/crear` | Crear | Formulario nuevo |
-| `/productos/editar/[id]` | Editar | Formulario edit |
-
-## 🎨 Estilos
-
-**Framework**: Tailwind CSS 4.x
-
-No se usan componentes prefabricados, solo utilidades de Tailwind.
-
-### Configuración:
-
-```javascript
-// tailwind.config.js
-module.exports = {
-  content: [
-    './src/**/*.{js,ts,jsx,tsx}',
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
-```
-
-## ✅ Validaciones Formulario
-
-**Crear / Editar Producto**:
-
-| Campo | Validación |
-|-------|-----------|
-| **ID** | Requerido, 3-10 caracteres, único (verifica con API) |
-| **Nombre** | Requerido, 5-100 caracteres |
-| **Descripción** | Requerido, 10-200 caracteres |
-| **Logo** | Requerido (URL válida) |
-| **Fecha Liberación** | Requerido, ≥ hoy |
-| **Fecha Revisión** | Requerido, exactamente 1 año después liberación |
-
-**Implementación**:
-
-```typescript
-// src/application/usecases/CreateProductUseCase.ts
-export const validateProduct = (product: ProductFormData): ValidationErrors => {
-  const errors: ValidationErrors = {};
-  
-  if (!product.id || product.id.length < 3) {
-    errors.id = 'ID debe tener mínimo 3 caracteres';
-  }
-  // ... más validaciones
-  
-  return errors;
-};
-```
-
-## ✅ Testing (Jest)
+## Tests
 
 **Framework**: Jest + React Testing Library
 
-### Ejecutar tests
+```bash
+npm test               # ejecuta tests
+npm test -- --coverage # con reporte de cobertura
+```
+
+**Cobertura objetivo**: ≥ 70% en componentes y hooks.
+
+| Archivo test | Qué verifica |
+|---|---|
+| `productService.test.ts` | Llamadas al API (fetch mockeado) |
+| `SearchBar.test.tsx` | Filtrado en tiempo real |
+| `ProductForm.test.tsx` | Validaciones: id vacío, fecha pasada, etc. |
+
+---
+
+## Verificar funcionamiento
 
 ```bash
-npm test
-```
-
-**Coverage esperado**: 70%+
-
-**Tipos de tests**:
-- Componentes (snapshot, interacción)
-- Hooks personalizados
-- Servicios (mock de fetch)
-
-### Ejemplo test
-
-```typescript
-// __tests__/components/ProductCard.test.tsx
-import { render, screen } from '@testing-library/react';
-import ProductCard from '@/presentation/components/ProductCard';
-
-describe('ProductCard', () => {
-  it('should render product name', () => {
-    const product = { id: '1', name: 'Tarjeta Crédito' };
-    render(<ProductCard product={product} />);
-    expect(screen.getByText('Tarjeta Crédito')).toBeInTheDocument();
-  });
-});
-```
-
-## 📊 Estructura de Datos
-
-**Producto Financiero**:
-
-```typescript
-interface Product {
-  id: string;              // Identificador único
-  name: string;            // Nombre del producto
-  description: string;     // Descripción
-  logo: string;           // URL del logo
-  date_release: string;   // ISO date (YYYY-MM-DD)
-  date_revision: string;  // ISO date (YYYY-MM-DD)
-}
-```
-
-## 🌐 API Endpoints Consumidos
-
-- `GET /bp/products` - Listar productos
-- `POST /bp/products` - Crear producto
-- `PUT /bp/products/:id` - Actualizar producto
-- `DELETE /bp/products/:id` - Eliminar producto
-- `GET /bp/products/verification/:id` - Verificar ID existente
-
-## 🔍 Verificar que funciona
-
-```bash
-# Desarrollo
-npm run dev
-# → http://localhost:3000
-
-# Build producción
+# Build de producción (verifica que compile sin errores)
 npm run build
-npm start
-# → http://localhost:3000
 
 # Lint
 npm run lint
+
+# Tests
+npm test
 ```
 
-## 🛠️ Troubleshooting
+---
 
-**Error: "Cannot find module"**
-- Ejecutar: `npm install`
+## Troubleshooting
 
-**Next.js localhost no responde**
-- Cambiar puerto: `next dev -p 3001`
+| Error | Solución |
+|---|---|
+| `Cannot find module` | `npm install` |
+| API no responde (3002) | Verificar que el backend Node.js esté corriendo |
+| CORS error | Verificar `NEXT_PUBLIC_API_BASE_URL` en `.env.local` |
+| Puerto 3000 ocupado | `next dev -p 3001` |
 
-**API no accesible desde frontend**
-- Verificar `NEXT_PUBLIC_API_BASE_URL` en `.env.local`
-- Verificar CORS del servidor backend
+---
 
-## 📚 Documentación Adicional
+## Documentación
 
-- [Architecture Overview](../docs/ARQUITECTURA.md)
-- [API Endpoints](../docs/API_BACKEND.md)
-
-## 📦 Dependencias Principales
-
-- **next**: 16.2.6 - Framework React con SSR
-- **react**: 19.2.4 - Librería UI
-- **typescript**: 5 - Tipado estático
-- **tailwindcss**: 4 - Estilos
-- **jest**: Tests
+- [API que consume el frontend](../docs/API_FRONTEND.md)
+- [Arquitectura del sistema](../docs/ARCHITECTURE.md)
+- [Plan de acción](../ACTION_PLAN.md)

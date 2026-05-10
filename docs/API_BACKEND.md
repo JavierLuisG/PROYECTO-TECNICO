@@ -393,15 +393,21 @@ Documentación de todos los endpoints de ambos microservicios.
 
 **Endpoint**: `GET /api/reportes`
 
-**Query Params** (requeridos):
-- `clienteId`: ID del cliente
-- `desde` (opcional): ISO date (default: inicio de año)
-- `hasta` (opcional): ISO date (default: hoy)
+**Query Params**:
+- `clienteId` (requerido): ID del cliente
+- `desde` (opcional): ISO date YYYY-MM-DD (default: inicio del año en curso)
+- `hasta` (opcional): ISO date YYYY-MM-DD (default: hoy)
+
+> El ejercicio especifica `/reportes?fecha=rango fechas`. Se implementa como `desde` + `hasta`
+> para mayor claridad y usabilidad REST.
 
 **Ejemplo**:
 ```
 GET /api/reportes?clienteId=650e8400-e29b-41d4-a716-446655440002&desde=2024-01-01&hasta=2024-12-31
 ```
+
+> El nombre del cliente en la respuesta se obtiene a partir del `ClienteRef` local que MS-Cuenta
+> mantiene sincronizado vía el evento `cliente-creado` publicado por MS-Cliente.
 
 **Response (200)**:
 ```json
@@ -466,13 +472,18 @@ GET /api/reportes?clienteId=650e8400-e29b-41d4-a716-446655440002&desde=2024-01-0
 
 **Response (204)**: Sin contenido
 
-**Response (400)**:
+**Response (404)**:
 ```json
 {
-  "error": "No se pueden eliminar movimientos, solo consultar",
-  "timestamp": "2024-02-10T11:15:00Z"
+  "timestamp": "2024-02-10T11:15:00Z",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Movimiento no encontrado",
+  "path": "/api/movimientos/850e8400-..."
 }
 ```
+
+> **Nota**: El ejercicio requiere CRUD completo para Movimientos (F1). En un contexto bancario real los movimientos serían inmutables, pero para cumplir el ejercicio se permite el DELETE físico.
 
 ---
 

@@ -85,13 +85,13 @@ Visión global del sistema: componentes, flujos de datos y comunicación entre s
 │                    RABBITMQ (Messaging)                          │
 │                    (puerto 5672)                                 │
 │                                                                  │
-│  Exchange: spring.cloud.stream                                   │
-│  Queue: movimiento-registrado-queue                              │
+│  Evento A: cliente-creado-exchange                               │
+│    Productor : MS-Cliente (al crear un cliente)                  │
+│    Consumidor: MS-Cuenta  (almacena referencia local del cliente)│
 │                                                                  │
-│  Flujo:                                                          │
-│  1. MS-Cuenta publica: movimiento-registrado                     │
-│  2. MS-Cliente consume (opcional, auditoría)                     │
-│  3. Otros servicios futuros pueden suscribirse                   │
+│  Evento B: movimiento-registrado-exchange                        │
+│    Productor : MS-Cuenta  (al registrar un movimiento)           │
+│    Consumidor: MS-Cliente (auditoría / log)                      │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -186,38 +186,26 @@ Transformar datos a DTO
 
 ## 🔄 Comunicación Asincrónica (RabbitMQ)
 
-### Configuración Spring Cloud Stream
+Flujo bidireccional entre ambos microservicios. Ninguno espera respuesta síncrona del otro.
 
-```yaml
-spring:
-  cloud:
-    stream:
-      bindings:
-        # Publisher (MS-Cuenta)
-        movimiento-registrado-out-0:
-          destination: movimiento-registrado-exchange
-          content-type: application/json
-        
-        # Consumer (MS-Cliente, opcional)
-        movimiento-registrado-in-0:
-          destination: movimiento-registrado-exchange
-          group: ms-cliente-group
-          content-type: application/json
-      
-      rabbit:
-        bindings:
-          movimiento-registrado-out-0:
-            producer:
-              routing-key-expression: "'movimiento'"
-          movimiento-registrado-in-0:
-            consumer:
-              queue-name-group-only: true
-```
-
-### Evento Publicado
+### Evento A: `cliente-creado` (MS-Cliente → MS-Cuenta)
 
 ```java
-// MS-Cuenta: EventPublisher
+// MS-Cliente publica al crear un cliente
+public record ClienteCreadoEvent(
+  String clienteId,
+  String nombre,
+  String identificacion
+) {}
+```
+
+MS-Cuenta consume este evento y persiste un `ClienteRef` local para poder incluir
+el nombre del cliente en los reportes sin necesidad de llamadas REST síncronas.
+
+### Evento B: `movimiento-registrado` (MS-Cuenta → MS-Cliente)
+
+```java
+// MS-Cuenta publica al registrar un movimiento
 public record MovimientoRegistradoEvent(
   String movimientoId,
   String cuentaId,
@@ -227,27 +215,57 @@ public record MovimientoRegistradoEvent(
 ) {}
 ```
 
-### Consumidor (MS-Cliente)
+MS-Cliente consume este evento para auditoría (log).
 
-```java
-// MS-Cliente: EventListener
-@Component
-public class MovimientoConsumer {
-  
-  @Bean
-  public Consumer<MovimientoRegistradoEvent> movimientoRegistrado() {
-    return event -> {
-      // Auditoría, logs, etc
-      log.info("Movimiento registrado: {}", event.movimientoId());
-    };
-  }
-}
+### Ventajas del diseño
+- Desacoplamiento total: si MS-Cliente cae, los movimientos siguen funcionando
+- MS-Cuenta puede generar reportes completos con datos locales
+- Si algún servicio cae, RabbitMQ reintenta la entrega del mensaje
+
+## 📦 Estructura de Paquetes (DDD + Hexagonal)
+
+Cada microservicio sigue la misma convención de capas. La **regla de dependencia** es estricta: el dominio no importa nada de infraestructura.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                  application/                           │
+│   port/in/   ← interfaces de casos de uso              │
+│   port/out/  ← interfaces de repositorio y eventos     │
+│   service/   ← implementa port/in, llama a port/out    │
+├─────────────────────────────────────────────────────────┤
+│                    domain/                              │
+│   model/       ← POJOs sin Spring ni JPA               │
+│   valueobject/ ← Saldo, NumeroCuenta, Identificacion   │
+│   event/       ← records de eventos de dominio         │
+│   exception/   ← excepciones de negocio                │
+├─────────────────────────────────────────────────────────┤
+│                 infrastructure/                         │
+│   persistence/adapter/    ← implementa port/out (JPA)  │
+│   persistence/entity/     ← @Entity JPA                │
+│   persistence/mapper/     ← Entity ↔ Domain            │
+│   persistence/repository/ ← Spring Data JPA            │
+│   messaging/publisher/    ← implementa port/out (MQ)   │
+│   messaging/consumer/     ← @Bean Function consumer    │
+│   web/controller/         ← @RestController            │
+│   web/dto/request/        ← DTOs de entrada            │
+│   web/dto/response/       ← DTOs de salida             │
+│   web/mapper/             ← Domain ↔ DTO               │
+│   web/exception/          ← @RestControllerAdvice      │
+│   config/                 ← Beans Spring, RabbitMQ     │
+└─────────────────────────────────────────────────────────┘
 ```
 
-**Ventajas**:
-- MS-Cuenta no espera respuesta de MS-Cliente
-- Si MS-Cliente cae, el mensaje se reintenta
-- Escalable: otros servicios pueden suscribirse
+**Flujo de una petición REST**:
+```
+HTTP Request
+  → Controller (infrastructure/web)
+    → UseCase interface (application/port/in)
+      → Service (application/service)  ← implementa port/in
+        → RepositoryPort (application/port/out)
+          → PersistenceAdapter (infrastructure/persistence/adapter)  ← implementa port/out
+            → JpaRepository (infrastructure/persistence/repository)
+              → PostgreSQL
+```
 
 ## 🗄️ Estrategia de Datos
 
@@ -336,11 +354,39 @@ spring:
 4. **Service Mesh**: Istio para circuit breakers
 5. **API Gateway**: Kong o Netflix Zuul para enrutamiento
 
-## 🧭 Próximos Pasos
+## 🖥️ Frontend (Next.js — Ejercicio independiente)
 
-1. Levantar PostgreSQL y RabbitMQ (Docker Compose)
-2. Ejecutar migraciones Flyway
-3. Levantar MS-Cliente (SpringBoot)
-4. Levantar MS-Cuenta (SpringBoot)
-5. Levantar Frontend (Next.js)
-6. Probar flujos end-to-end
+El frontend implementa un catálogo de **productos financieros** consumiendo un backend
+Node.js separado en el puerto **3002** (no los microservicios Spring Boot).
+
+```
+Navegador
+  └── Next.js :3000
+        └── HTTP → Node.js API :3002/bp/products
+```
+
+| Funcionalidad | Puerto | Descripción |
+|---|---|---|
+| Frontend Next.js | 3000 | UI de productos financieros |
+| API Node.js (externa) | 3002 | Backend provisto por el ejercicio |
+| MS-Cliente | 8081 | Gestión bancaria de clientes |
+| MS-Cuenta | 8082 | Gestión bancaria de cuentas |
+
+El backend Node.js en 3002 debe ejecutarse por separado (ver `docs/API_FRONTEND.md`).
+
+## 🧭 Estado actual y próximos pasos
+
+**Infraestructura lista** (Docker Compose levantado):
+- ✅ PostgreSQL :5432
+- ✅ RabbitMQ :5672 / :15672
+- ✅ MS-Cliente :8081 (arranca, sin lógica implementada)
+- ✅ MS-Cuenta :8082 (arranca, sin lógica implementada)
+- ✅ Frontend :3000 (arranca, sin páginas implementadas)
+
+**Pendiente de implementar** (ver `ACTION_PLAN.md`):
+1. Migraciones Flyway (schema + datos prueba)
+2. Lógica de negocio MS-Cliente (entidades, use cases, controllers)
+3. Lógica de negocio MS-Cuenta (entidades, use cases, movimientos, reportes)
+4. Páginas y componentes del frontend
+5. Tests unitarios e integración
+6. CI/CD con GitHub Actions

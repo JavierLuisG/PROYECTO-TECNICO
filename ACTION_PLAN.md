@@ -82,36 +82,48 @@ Desarrollo paso a paso del backend (Spring Boot microservicios) y frontend (Next
 
 > **Dependencias**: Fase 1 completa.
 
-### HU-05: Estructura hexagonal MS-Cliente
+### HU-05: Estructura DDD + Hexagonal MS-Cliente
 
 **Paquetes a crear** bajo `com.ms_cliente`:
 
 ```
-domain/
-  model/         ← Persona.java, Cliente.java (sin anotaciones JPA)
-  port/
-    in/          ← use cases interfaces
-    out/         ← repository interfaces
 application/
-  usecase/       ← implementaciones de los use cases
+  port/
+    in/          ← interfaces de casos de uso (puertos de entrada)
+    out/         ← interfaces de repositorio/eventos (puertos de salida)
+  service/       ← implementaciones de los puertos in (lógica de aplicación)
+
+domain/
+  event/         ← ClienteCreadoEvent.java (record puro, sin Spring)
+  exception/     ← ClienteNotFoundException.java, ClienteConCuentasException.java
+  model/         ← Persona.java, Cliente.java (POJO sin anotaciones JPA)
+  valueobject/   ← Identificacion.java, Contrasena.java, NombreCompleto.java
+
 infrastructure/
+  config/        ← RabbitMQConfig.java, beans de Spring Cloud Stream
+  messaging/
+    publisher/   ← ClienteCreadoPublisher.java (implementa port/out)
+    consumer/    ← MovimientoRegistradoConsumer.java
   persistence/
-    entity/      ← PersonaEntity.java, ClienteEntity.java (con JPA)
-    repository/  ← JPA repositories (Spring Data)
-    mapper/      ← Entity ↔ Domain mappers
+    adapter/     ← ClientePersistenceAdapter.java (implementa port/out)
+    entity/      ← PersonaEntity.java, ClienteEntity.java (@Entity JPA)
+    mapper/      ← ClienteEntityMapper.java (Entity ↔ Domain)
+    repository/  ← ClienteJpaRepository.java (Spring Data JPA)
   web/
     controller/  ← ClienteController.java
-    dto/         ← request/response DTOs
-    mapper/      ← Domain ↔ DTO mappers
-  messaging/
-    publisher/   ← ClienteCreadoPublisher.java
-    consumer/    ← MovimientoConsumer.java
-  config/        ← RabbitMQ bean config
+    dto/
+      request/   ← CreateClienteRequest.java, UpdateClienteRequest.java
+      response/  ← ClienteResponse.java, ClienteSummaryResponse.java
+    exception/   ← GlobalExceptionHandler.java (@RestControllerAdvice)
+    mapper/      ← ClienteDtoMapper.java (Domain ↔ DTO)
 ```
 
 **Criterios de aceptación**:
 - [ ] Paquetes creados y compilando
-- [ ] Ninguna anotación JPA en `domain/model/`
+- [ ] Ninguna anotación JPA ni Spring en `domain/`
+- [ ] Ninguna referencia a infraestructura en `application/`
+- [ ] Los adapters en `infrastructure/` implementan las interfaces de `application/port/out/`
+- [ ] Los services en `application/service/` implementan las interfaces de `application/port/in/`
 
 ### HU-06: Entidades de dominio y JPA — MS-Cliente
 
@@ -206,19 +218,40 @@ infrastructure/
 - [ ] Reconstruir imagen Docker sin errores
 - [ ] Ajustar `settings.gradle` si es necesario
 
-### HU-13: Estructura hexagonal MS-Cuenta
+### HU-13: Estructura DDD + Hexagonal MS-Cuenta
 
-Misma estructura que HU-05 pero para `com.ms_cuenta`:
+**Paquetes a crear** bajo `com.ms_cuenta`:
 
 ```
-domain/model/      ← Cuenta.java, Movimiento.java, ClienteRef.java
-domain/port/in/    ← use cases interfaces
-domain/port/out/   ← repository interfaces
-application/usecase/
-infrastructure/persistence/
-infrastructure/web/
-infrastructure/messaging/
-infrastructure/config/
+application/
+  port/
+    in/          ← CreateCuentaUseCase.java, RegistrarMovimientoUseCase.java, etc.
+    out/         ← CuentaRepositoryPort.java, MovimientoRepositoryPort.java, etc.
+  service/       ← CuentaService.java, MovimientoService.java, ReporteService.java
+
+domain/
+  event/         ← MovimientoRegistradoEvent.java, ClienteCreadoEvent.java (records)
+  exception/     ← SaldoInsuficienteException.java, CuentaNotFoundException.java
+  model/         ← Cuenta.java, Movimiento.java, ClienteRef.java
+  valueobject/   ← NumeroCuenta.java, Saldo.java, TipoCuenta.java (enum/VO)
+
+infrastructure/
+  config/        ← RabbitMQConfig.java
+  messaging/
+    publisher/   ← MovimientoRegistradoPublisher.java (implementa port/out)
+    consumer/    ← ClienteCreadoConsumer.java
+  persistence/
+    adapter/     ← CuentaPersistenceAdapter.java, MovimientoPersistenceAdapter.java
+    entity/      ← CuentaEntity.java, MovimientoEntity.java, ClienteRefEntity.java
+    mapper/      ← CuentaEntityMapper.java, MovimientoEntityMapper.java
+    repository/  ← CuentaJpaRepository.java, MovimientoJpaRepository.java, ClienteRefJpaRepository.java
+  web/
+    controller/  ← CuentaController.java, MovimientoController.java, ReporteController.java
+    dto/
+      request/   ← CreateCuentaRequest.java, RegistrarMovimientoRequest.java
+      response/  ← CuentaResponse.java, MovimientoResponse.java, ReporteResponse.java
+    exception/   ← GlobalExceptionHandler.java (@RestControllerAdvice)
+    mapper/      ← CuentaDtoMapper.java, MovimientoDtoMapper.java
 ```
 
 ### HU-14: Entidades de dominio y JPA — MS-Cuenta

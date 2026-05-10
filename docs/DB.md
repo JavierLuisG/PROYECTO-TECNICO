@@ -121,18 +121,20 @@ CREATE INDEX idx_createdAt ON cuenta(createdAt);
 | `descripcion` | VARCHAR(255) | NULLABLE | Contexto del movimiento |
 | `createdAt` | TIMESTAMP | DEFAULT NOW() | Fecha registro |
 
-**Constraints Críticos**:
+**Constraints en BD**:
 ```sql
 -- Evitar movimientos de $0
 CHECK (valor != 0)
-
--- Garantizar coherencia aritmética
-CHECK (saldoActual = saldoAnterior + valor)
 
 -- FK
 FOREIGN KEY (cuentaId) REFERENCES cuenta(cuentaId) 
   ON DELETE RESTRICT
 ```
+
+> La coherencia aritmética `saldoActual = saldoAnterior + valor` se garantiza en la
+> capa de aplicación (use case `RegistrarMovimientoUseCase`), no como CHECK de BD,
+> ya que PostgreSQL evalúa CHECK sobre los valores finales de la fila sin contexto
+> de la transacción previa.
 
 **Índices** (para reportes rápidos):
 ```sql
@@ -363,7 +365,8 @@ END IF;
 
 ## 📚 Referencias
 
-- Script SQL completo: `backend/BaseDatos.sql`
-- Migraciones: `backend/ms-cliente/src/main/resources/db/migration/`
+- Script SQL entregable: `backend/BaseDatos.sql` *(generado al finalizar el desarrollo a partir de las migraciones Flyway)*
+- Migraciones MS-Cliente: `backend/ms-cliente/src/main/resources/db/migration/`
+- Migraciones MS-Cuenta: `backend/ms-cuenta/src/main/resources/db/migration/`
 - Documentación Flyway: https://flywaydb.org/
 - Documentación PostgreSQL: https://www.postgresql.org/docs/
