@@ -54,8 +54,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banco_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: create
-      SPRING_FLYWAY_ENABLED: "false"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_FLYWAY_TABLE: flyway_schema_history_cliente
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: guest
@@ -88,8 +89,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banco_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: create
-      SPRING_FLYWAY_ENABLED: "false"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_FLYWAY_TABLE: flyway_schema_history_cuenta
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: guest
