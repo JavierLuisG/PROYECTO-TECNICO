@@ -6,6 +6,10 @@ Desarrollo paso a paso del backend (Spring Boot microservicios) y frontend (Next
 **Stack**: Java 21 + Spring Boot 4, Next.js 16, PostgreSQL, RabbitMQ, Docker  
 **Requisitos cubiertos**: F1–F5 Backend + F1–F4 Frontend (F5 Frontend deseable)
 
+**Nomenclatura**:
+- `US-XX` — User Story funcional (spec completa en `docs/user-stories/`)
+- `TASK-XX` — Tarea técnica de implementación o infraestructura
+
 ---
 
 ## Estado inicial
@@ -26,11 +30,7 @@ Desarrollo paso a paso del backend (Spring Boot microservicios) y frontend (Next
 
 > **Prerequisito de todo el backend.** Sin schema no arranca JPA con `ddl-auto: validate`.
 
-### HU-01: Flyway migration V1 — Schema inicial
-
-**Como** desarrollador  
-**Quiero** crear el schema de BD con Flyway  
-**Para** que ambos microservicios puedan persistir sus entidades
+### TASK-01: Flyway migration V1 — Schema inicial
 
 **Archivos a crear**:
 - `backend/ms-cliente/src/main/resources/db/migration/V1__schema_cliente.sql`
@@ -44,7 +44,7 @@ Desarrollo paso a paso del backend (Spring Boot microservicios) y frontend (Next
 - [ ] Tabla `movimiento` con columnas: movimiento_id (UUID PK), cuenta_id (UUID FK), fecha, tipo_movimiento, valor, saldo_anterior, saldo_actual, descripcion, created_at
 - [ ] `CHECK (valor != 0)` en movimiento
 
-### HU-02: Flyway migration V2 — Índices
+### TASK-02: Flyway migration V2 — Índices
 
 **Archivos a crear**:
 - `V2__indexes_cliente.sql` en ms-cliente
@@ -55,7 +55,7 @@ Desarrollo paso a paso del backend (Spring Boot microservicios) y frontend (Next
 - [ ] `idx_numero_cuenta` en cuenta(numero_cuenta)
 - [ ] `idx_movimiento_cuenta_fecha` en movimiento(cuenta_id, fecha DESC) *(para reportes)*
 
-### HU-03: Flyway migration V3 — Datos de prueba
+### TASK-03: Flyway migration V3 — Datos de prueba
 
 **Archivos a crear**:
 - `V3__test_data_cliente.sql` en ms-cliente
@@ -67,7 +67,7 @@ Desarrollo paso a paso del backend (Spring Boot microservicios) y frontend (Next
 - [ ] 4 movimientos según tabla del ejercicio
 - [ ] `cliente_ref` sincronizados con los 3 clientes
 
-### HU-04: Reactivar Flyway en docker-compose
+### TASK-04: Reactivar Flyway en docker-compose
 
 **Archivo a modificar**: `docker-compose.yml`
 
@@ -82,456 +82,395 @@ Desarrollo paso a paso del backend (Spring Boot microservicios) y frontend (Next
 
 > **Dependencias**: Fase 1 completa.
 
-### HU-05: Estructura DDD + Hexagonal MS-Cliente
+### TASK-05: Estructura DDD + Hexagonal MS-Cliente
 
 **Paquetes a crear** bajo `com.ms_cliente`:
 
 ```
 application/
-  port/
-    in/          ← interfaces de casos de uso (puertos de entrada)
-    out/         ← interfaces de repositorio/eventos (puertos de salida)
-  service/       ← implementaciones de los puertos in (lógica de aplicación)
+  port/in/           ← interfaces de casos de uso (CreateClienteUseCase, etc.)
+  port/out/          ← interfaces de salida (ClienteRepositoryPort, EventPublisherPort)
+  service/           ← implementaciones (ClienteService)
 
 domain/
-  event/         ← ClienteCreadoEvent.java (record puro, sin Spring)
-  exception/     ← ClienteNotFoundException.java, ClienteConCuentasException.java
-  model/         ← Persona.java, Cliente.java (POJO sin anotaciones JPA)
-  valueobject/   ← Identificacion.java, Contrasena.java, NombreCompleto.java
+  event/             ← ClienteCreadoEvent (record puro)
+  exception/         ← ClienteNotFoundException, ClienteConCuentasException
+  model/             ← Persona, Cliente (POJOs sin Spring/JPA)
+  valueobject/       ← Identificacion, Contrasena, NombreCompleto
 
 infrastructure/
-  config/        ← RabbitMQConfig.java, beans de Spring Cloud Stream
+  config/            ← RabbitMQConfig
   messaging/
-    publisher/   ← ClienteCreadoPublisher.java (implementa port/out)
-    consumer/    ← MovimientoRegistradoConsumer.java
+    publisher/       ← ClienteCreadoPublisher (implementa port/out)
+    consumer/        ← MovimientoRegistradoConsumer (auditoría)
   persistence/
-    adapter/     ← ClientePersistenceAdapter.java (implementa port/out)
-    entity/      ← PersonaEntity.java, ClienteEntity.java (@Entity JPA)
-    mapper/      ← ClienteEntityMapper.java (Entity ↔ Domain)
-    repository/  ← ClienteJpaRepository.java (Spring Data JPA)
+    adapter/         ← ClientePersistenceAdapter (implementa port/out)
+    entity/          ← PersonaEntity, ClienteEntity (@Entity)
+    mapper/          ← ClienteEntityMapper (Entity ↔ Domain)
+    repository/      ← ClienteJpaRepository (Spring Data)
   web/
-    controller/  ← ClienteController.java
-    dto/
-      request/   ← CreateClienteRequest.java, UpdateClienteRequest.java
-      response/  ← ClienteResponse.java, ClienteSummaryResponse.java
-    exception/   ← GlobalExceptionHandler.java (@RestControllerAdvice)
-    mapper/      ← ClienteDtoMapper.java (Domain ↔ DTO)
+    controller/      ← ClienteController
+    dto/request/     ← CreateClienteRequest, UpdateClienteRequest
+    dto/response/    ← ClienteResponse, ClienteSummaryResponse
+    exception/       ← GlobalExceptionHandler (@RestControllerAdvice)
+    mapper/          ← ClienteDtoMapper (Domain ↔ DTO)
 ```
 
 **Criterios de aceptación**:
 - [ ] Paquetes creados y compilando
-- [ ] Ninguna anotación JPA ni Spring en `domain/`
+- [ ] Ninguna anotación JPA en `domain/`
 - [ ] Ninguna referencia a infraestructura en `application/`
 - [ ] Los adapters en `infrastructure/` implementan las interfaces de `application/port/out/`
 - [ ] Los services en `application/service/` implementan las interfaces de `application/port/in/`
 
-### HU-06: Entidades de dominio y JPA — MS-Cliente
+### TASK-06: Entidades de dominio y JPA — MS-Cliente
 
 **Archivos a crear**:
 - `domain/model/Persona.java` — POJO con campos del ejercicio
 - `domain/model/Cliente.java` — POJO que contiene Persona
+- `domain/valueobject/Identificacion.java`, `Contrasena.java`
 - `infrastructure/persistence/entity/PersonaEntity.java` — `@Entity`
-- `infrastructure/persistence/entity/ClienteEntity.java` — `@Entity`, herencia/composición
-- `infrastructure/persistence/repository/PersonaJpaRepository.java`
+- `infrastructure/persistence/entity/ClienteEntity.java` — `@Entity`
 - `infrastructure/persistence/repository/ClienteJpaRepository.java`
+- `infrastructure/persistence/mapper/ClienteEntityMapper.java`
 
 **Criterios de aceptación**:
 - [ ] `Persona`: nombre, genero, edad, identificacion, direccion, telefono, estado
 - [ ] `Cliente`: clienteId, contrasena, estado + referencia a Persona
 - [ ] Mappers entre Entity ↔ Domain funcionando
 
-### HU-07: CRUD de Clientes (F1)
+### US-01: CRUD de Clientes (F1)
 
-**Use cases a implementar**:
-- `CreateClienteUseCase` — crea Persona + Cliente en transacción
-- `GetClienteUseCase` — obtiene por clienteId
-- `ListClientesUseCase` — lista todos
-- `UpdateClienteUseCase` — actualiza campos permitidos
-- `DeleteClienteUseCase` — elimina (RESTRICT si tiene cuentas → 400)
+> Spec completa: [`docs/user-stories/US-01-gestion-clientes.md`](docs/user-stories/US-01-gestion-clientes.md)
 
-**Controller**: `ClienteController.java`
+**Como** administrador del banco  
+**Quiero** crear, consultar, actualizar y eliminar clientes  
+**Para** mantener actualizado el registro de personas que operan con el banco
 
-| Método | Endpoint | Use case |
-|---|---|---|
-| POST | `/api/clientes` | CreateCliente |
-| GET | `/api/clientes` | ListClientes |
-| GET | `/api/clientes/{id}` | GetCliente |
-| PUT | `/api/clientes/{id}` | UpdateCliente |
-| DELETE | `/api/clientes/{id}` | DeleteCliente |
+**Use cases**: `CreateClienteUseCase`, `GetClienteUseCase`, `ListClientesUseCase`, `UpdateClienteUseCase`, `DeleteClienteUseCase`
 
 **Criterios de aceptación**:
 - [ ] Los 5 endpoints responden según `docs/API_BACKEND.md`
 - [ ] POST valida: identificacion único, contraseña ≥ 8 chars, edad, nombre
-- [ ] DELETE devuelve 400 si el cliente tiene cuentas (regla de negocio)
+- [ ] DELETE devuelve 400 si el cliente tiene cuentas
 - [ ] Respuestas de error en formato estándar (timestamp, status, message, path)
 
-### HU-08: Global Exception Handler — MS-Cliente
+### TASK-07: Global Exception Handler — MS-Cliente
 
-**Archivo a crear**: `infrastructure/web/GlobalExceptionHandler.java` (`@RestControllerAdvice`)
+**Archivo a crear**: `infrastructure/web/exception/GlobalExceptionHandler.java`
 
 **Criterios de aceptación**:
 - [ ] `EntityNotFoundException` → 404
-- [ ] `BusinessException` ("Saldo no disponible", "Cliente con cuentas") → 400
-- [ ] `MethodArgumentNotValidException` (Bean Validation) → 400 con lista de errores
-- [ ] Formato estándar de error en todas las respuestas
+- [ ] `BusinessException` → 400
+- [ ] `MethodArgumentNotValidException` → 400 con lista de errores
+- [ ] Formato estándar en todas las respuestas
 
-### HU-09: Test unitario — dominio Cliente (F5 Backend)
+### TASK-08: Test unitario — dominio Cliente (F5 Backend)
 
 **Archivo a crear**: `src/test/java/.../domain/model/ClienteTest.java`
 
 **Criterios de aceptación**:
-- [ ] Test que verifica que no se puede crear un Cliente con contraseña < 8 chars
-- [ ] Test que verifica el estado inicial (activo = true) al crear un Cliente
-- [ ] Sin Spring context (`@ExtendWith(MockitoExtension.class)` o puro JUnit)
+- [ ] Test: contraseña < 8 caracteres lanza excepción de dominio
+- [ ] Test: estado inicial `true` al crear un Cliente
+- [ ] Test: value object `Contrasena` rechaza contraseñas vacías
+- [ ] Sin Spring context — puro JUnit 5
 
-### HU-10: Evento `cliente-creado` — Publisher (MS-Cliente)
+### TASK-09: Evento `cliente-creado` — Publisher (MS-Cliente)
 
 **Archivo a crear**: `infrastructure/messaging/publisher/ClienteCreadoPublisher.java`
 
 **Criterios de aceptación**:
 - [ ] Se publica al `cliente-creado-exchange` al crear exitosamente un cliente
 - [ ] Payload: `{ clienteId, nombre, identificacion }`
-- [ ] Publish dentro del mismo `@Transactional` del use case (o en `@TransactionalEventListener`)
 - [ ] Si RabbitMQ no está disponible, el cliente igualmente se crea (degrade gracefully)
 
-### HU-11: Consumer `movimiento-registrado` — MS-Cliente
+### TASK-10: Consumer `movimiento-registrado` — MS-Cliente
 
-**Archivo a crear**: `infrastructure/messaging/consumer/MovimientoConsumer.java`
+**Archivo a crear**: `infrastructure/messaging/consumer/MovimientoRegistradoConsumer.java`
 
 **Criterios de aceptación**:
 - [ ] Consume del exchange `movimiento-registrado-exchange`
-- [ ] Registra un log con los datos del evento (auditoría)
+- [ ] Registra un log INFO con los datos del evento
 
 ---
 
 ## Fase 3 — MS-Cuenta
 
-> **Dependencias**: HU-01, HU-02 (schema en BD).  
-> MS-Cuenta es independiente de MS-Cliente en tiempo de ejecución.
+> **Dependencias**: TASK-01, TASK-02 (schema en BD).
 
-### HU-12: Completar dependencias build.gradle — MS-Cuenta
+### TASK-11: Completar dependencias build.gradle — MS-Cuenta
 
 **Archivo a modificar**: `backend/ms-cuenta/build.gradle`
 
 **Criterios de aceptación**:
 - [ ] Agregar: `spring-boot-starter-data-jpa`, `flyway-database-postgresql`, `spring-boot-starter-amqp`, `spring-cloud-stream`, `spring-cloud-stream-binder-rabbit`, `lombok`, `postgresql` (runtime)
-- [ ] Reconstruir imagen Docker sin errores
-- [ ] Ajustar `settings.gradle` si es necesario
+- [ ] `./gradlew build -x test` sin errores
+- [ ] `docker compose build ms-cuenta` exitoso
 
-### HU-13: Estructura DDD + Hexagonal MS-Cuenta
+### TASK-12: Estructura DDD + Hexagonal MS-Cuenta
 
 **Paquetes a crear** bajo `com.ms_cuenta`:
 
 ```
 application/
-  port/
-    in/          ← CreateCuentaUseCase.java, RegistrarMovimientoUseCase.java, etc.
-    out/         ← CuentaRepositoryPort.java, MovimientoRepositoryPort.java, etc.
-  service/       ← CuentaService.java, MovimientoService.java, ReporteService.java
+  port/in/           ← CreateCuentaUseCase, RegistrarMovimientoUseCase, GenerarReporteUseCase, etc.
+  port/out/          ← CuentaRepositoryPort, MovimientoRepositoryPort, EventPublisherPort
+  service/           ← CuentaService, MovimientoService, ReporteService
 
 domain/
-  event/         ← MovimientoRegistradoEvent.java, ClienteCreadoEvent.java (records)
-  exception/     ← SaldoInsuficienteException.java, CuentaNotFoundException.java
-  model/         ← Cuenta.java, Movimiento.java, ClienteRef.java
-  valueobject/   ← NumeroCuenta.java, Saldo.java, TipoCuenta.java (enum/VO)
+  event/             ← MovimientoRegistradoEvent, ClienteCreadoEvent (records)
+  exception/         ← SaldoInsuficienteException, CuentaNotFoundException
+  model/             ← Cuenta, Movimiento, ClienteRef
+  valueobject/       ← NumeroCuenta, Saldo, TipoCuenta (enum)
 
 infrastructure/
-  config/        ← RabbitMQConfig.java
+  config/            ← RabbitMQConfig
   messaging/
-    publisher/   ← MovimientoRegistradoPublisher.java (implementa port/out)
-    consumer/    ← ClienteCreadoConsumer.java
+    publisher/       ← MovimientoRegistradoPublisher (implementa port/out)
+    consumer/        ← ClienteCreadoConsumer (sincroniza ClienteRef)
   persistence/
-    adapter/     ← CuentaPersistenceAdapter.java, MovimientoPersistenceAdapter.java
-    entity/      ← CuentaEntity.java, MovimientoEntity.java, ClienteRefEntity.java
-    mapper/      ← CuentaEntityMapper.java, MovimientoEntityMapper.java
-    repository/  ← CuentaJpaRepository.java, MovimientoJpaRepository.java, ClienteRefJpaRepository.java
+    adapter/         ← CuentaPersistenceAdapter, MovimientoPersistenceAdapter
+    entity/          ← CuentaEntity, MovimientoEntity, ClienteRefEntity (@Entity)
+    mapper/          ← CuentaEntityMapper, MovimientoEntityMapper
+    repository/      ← CuentaJpaRepository, MovimientoJpaRepository, ClienteRefJpaRepository
   web/
-    controller/  ← CuentaController.java, MovimientoController.java, ReporteController.java
-    dto/
-      request/   ← CreateCuentaRequest.java, RegistrarMovimientoRequest.java
-      response/  ← CuentaResponse.java, MovimientoResponse.java, ReporteResponse.java
-    exception/   ← GlobalExceptionHandler.java (@RestControllerAdvice)
-    mapper/      ← CuentaDtoMapper.java, MovimientoDtoMapper.java
+    controller/      ← CuentaController, MovimientoController, ReporteController
+    dto/request/     ← CreateCuentaRequest, RegistrarMovimientoRequest
+    dto/response/    ← CuentaResponse, MovimientoResponse, ReporteResponse
+    exception/       ← GlobalExceptionHandler (@RestControllerAdvice)
+    mapper/          ← CuentaDtoMapper, MovimientoDtoMapper
 ```
 
-### HU-14: Entidades de dominio y JPA — MS-Cuenta
+### TASK-13: Entidades de dominio y JPA — MS-Cuenta
 
 **Archivos a crear**:
 - `domain/model/Cuenta.java`, `Movimiento.java`, `ClienteRef.java`
-- `infrastructure/persistence/entity/CuentaEntity.java`, `MovimientoEntity.java`, `ClienteRefEntity.java`
-- JPA repositories correspondientes
+- `domain/valueobject/Saldo.java`, `NumeroCuenta.java`, `TipoCuenta.java`
+- `domain/exception/SaldoInsuficienteException.java`
+- Entidades JPA: `CuentaEntity`, `MovimientoEntity`, `ClienteRefEntity`
+- Mappers y repositorios JPA correspondientes
 
-**Criterios de aceptación**:
-- [ ] `ClienteRef` tiene: clienteId, nombre, identificacion
-- [ ] `Cuenta` tiene: cuentaId, clienteId, numeroCuenta, tipoCuenta, saldoInicial, saldo, estado
-- [ ] `Movimiento` tiene: movimientoId, cuentaId, fecha, tipoMovimiento, valor, saldoAnterior, saldoActual, descripcion
+### US-02: CRUD de Cuentas (F1)
 
-### HU-15: CRUD de Cuentas (F1)
+> Spec completa: [`docs/user-stories/US-02-gestion-cuentas.md`](docs/user-stories/US-02-gestion-cuentas.md)
 
-**Use cases**: CreateCuenta, GetCuenta, ListCuentas, UpdateCuenta, DeleteCuenta
-
-| Método | Endpoint |
-|---|---|
-| POST | `/api/cuentas` |
-| GET | `/api/cuentas` |
-| GET | `/api/cuentas/{id}` |
-| PUT | `/api/cuentas/{id}` |
-| DELETE | `/api/cuentas/{id}` |
+**Como** administrador del banco  
+**Quiero** crear, consultar, actualizar y eliminar cuentas bancarias  
+**Para** administrar los productos bancarios asignados a cada cliente
 
 **Criterios de aceptación**:
 - [ ] POST valida: numeroCuenta único, tipoCuenta en lista válida, clienteId referenciado en `ClienteRef`
 - [ ] DELETE devuelve 400 si la cuenta tiene movimientos
 - [ ] Respuestas según `docs/API_BACKEND.md`
 
-### HU-16: Registrar Movimiento (F2 + F3) ⭐
+### US-03: Registrar Movimiento (F2 + F3) ⭐
 
-**Use case**: `RegistrarMovimientoUseCase` — lógica crítica con `@Transactional`
+> Spec completa: [`docs/user-stories/US-03-registrar-movimiento.md`](docs/user-stories/US-03-registrar-movimiento.md)
 
-**Algoritmo**:
-1. Obtener cuenta (FOR UPDATE / lock pesimista)
-2. Si es retiro (`valor < 0`): verificar `cuenta.saldo + valor >= 0`  
-   → Si falla: lanzar `SaldoInsuficienteException("Saldo no disponible")`
-3. Insertar movimiento con `saldoAnterior = cuenta.saldo`, `saldoActual = cuenta.saldo + valor`
-4. Actualizar `cuenta.saldo += valor`
+**Como** sistema bancario  
+**Quiero** registrar depósitos y retiros actualizando el saldo de forma atómica  
+**Para** garantizar la trazabilidad y consistencia de todas las transacciones
+
+**Algoritmo** (`RegistrarMovimientoUseCase`, `@Transactional`):
+1. Obtener cuenta (lock pesimista)
+2. Si retiro y `cuenta.saldo + valor < 0` → `SaldoInsuficienteException("Saldo no disponible")`
+3. `saldoAnterior = cuenta.saldo`, `saldoActual = saldoAnterior + valor`
+4. Insertar movimiento, actualizar `cuenta.saldo`
 5. Publicar evento `movimiento-registrado`
 
 **Criterios de aceptación**:
-- [ ] POST `/api/movimientos` crea el movimiento y actualiza saldo en una sola transacción
-- [ ] Retiro con saldo insuficiente → 400 con mensaje `"Saldo no disponible"`
+- [ ] Retiro con saldo insuficiente → 400 con mensaje exacto `"Saldo no disponible"`
+- [ ] El saldo no cambia si el movimiento falla
 - [ ] Depósito y retiro con saldo suficiente → 201 con saldos coherentes
-- [ ] GET, PUT, DELETE `/api/movimientos/{id}` funcionan correctamente
+- [ ] GET, PUT, DELETE `/api/movimientos/{id}` funcionan
 
-### HU-17: Reporte Estado de Cuenta (F4) ⭐
+### US-04: Reporte Estado de Cuenta (F4) ⭐
 
-**Use case**: `GenerarReporteUseCase`
+> Spec completa: [`docs/user-stories/US-04-reporte-estado-cuenta.md`](docs/user-stories/US-04-reporte-estado-cuenta.md)
 
-**Query**: JOIN cuenta + movimiento + cliente_ref WHERE clienteId = ? AND fecha BETWEEN ? AND ?
+**Como** cliente del banco  
+**Quiero** consultar el estado de mis cuentas y movimientos en un período  
+**Para** revisar mi historial financiero
 
 **Criterios de aceptación**:
 - [ ] GET `/api/reportes?clienteId=X&desde=YYYY-MM-DD&hasta=YYYY-MM-DD`
 - [ ] Respuesta incluye nombre del cliente (de `ClienteRef`)
-- [ ] Respuesta incluye lista de cuentas con sus movimientos en el rango
-- [ ] Si `desde`/`hasta` no se pasan, usa inicio de año y hoy
-- [ ] Respuesta formato según `docs/API_BACKEND.md`
+- [ ] Sin `desde`/`hasta` usa inicio de año y hoy como defaults
+- [ ] Cuentas sin movimientos en el rango aparecen con lista vacía
 
-### HU-18: Global Exception Handler — MS-Cuenta
+### TASK-14: Global Exception Handler — MS-Cuenta
 
-Igual que HU-08 pero para MS-Cuenta. Incluir `SaldoInsuficienteException`.
+Igual que TASK-07. Incluir handler específico para `SaldoInsuficienteException` → 400 con `"Saldo no disponible"`.
 
-### HU-19: Evento `cliente-creado` — Consumer (MS-Cuenta)
+### TASK-15: Consumer `cliente-creado` — MS-Cuenta
 
 **Archivo a crear**: `infrastructure/messaging/consumer/ClienteCreadoConsumer.java`
 
 **Criterios de aceptación**:
 - [ ] Consume del exchange `cliente-creado-exchange`
-- [ ] Persiste o actualiza `ClienteRef` con los datos recibidos
-- [ ] Operación idempotente (upsert)
+- [ ] Persiste o actualiza `ClienteRef` con upsert idempotente
 
-### HU-20: Evento `movimiento-registrado` — Publisher (MS-Cuenta)
+### TASK-16: Publisher `movimiento-registrado` — MS-Cuenta
 
 **Archivo a crear**: `infrastructure/messaging/publisher/MovimientoRegistradoPublisher.java`
 
 **Criterios de aceptación**:
-- [ ] Publica al `movimiento-registrado-exchange` tras registrar movimiento exitosamente
+- [ ] Publica al `movimiento-registrado-exchange` tras movimiento exitoso
 - [ ] Payload: `{ movimientoId, cuentaId, valor, saldoActual, fecha }`
 
-### HU-21: Test de integración — MS-Cuenta (F6 deseable)
+### TASK-17: Test de integración — MS-Cuenta (F6 deseable)
 
 **Archivo a crear**: `src/test/java/.../RegistrarMovimientoIntegrationTest.java`
 
 **Criterios de aceptación**:
-- [ ] Usa `@SpringBootTest` con base H2 o Testcontainers (PostgreSQL)
-- [ ] Test: depósito actualiza saldo correctamente
-- [ ] Test: retiro con saldo insuficiente devuelve 400 + `"Saldo no disponible"`
+- [ ] Test: depósito actualiza saldo en BD
+- [ ] Test: retiro con saldo insuficiente → 400 + `"Saldo no disponible"` y saldo sin cambio
 
 ---
 
 ## Fase 4 — Frontend Next.js
 
-> **Dependencias**: El backend Node.js en puerto 3002 debe estar corriendo.
+> **Dependencias**: Backend Node.js en puerto 3002 corriendo.
 
-### HU-22: Setup estructura y capa de servicios
+### TASK-18: Setup estructura y capa de servicios
 
-**Estructura de carpetas**:
+**Estructura**:
 ```
 src/
-  domain/
-    models/       ← Product.ts (interfaz de dominio)
-  application/
-    usecases/     ← listProducts.ts, createProduct.ts, etc.
-  infrastructure/
-    api/          ← productService.ts (fetch al API :3002)
-  presentation/
-    components/   ← ProductCard, ProductList, SearchBar, etc.
-    pages/ (app/) ← page.tsx, products/new/page.tsx, products/[id]/edit/page.tsx
-    hooks/        ← useProducts.ts
+  domain/models/Product.ts
+  application/usecases/   ← listProducts, createProduct, updateProduct, deleteProduct
+  application/hooks/      ← useProducts, useProductForm, useSearch
+  infrastructure/api/productService.ts
+  presentation/components/
 ```
 
 **Criterios de aceptación**:
+- [ ] `productService.ts` implementa: `getAll`, `create`, `update`, `remove`, `verifyId`
 - [ ] `NEXT_PUBLIC_API_BASE_URL=http://localhost:3002` configurado
-- [ ] `productService.ts` implementa: getAll, create, update, delete, verifyId
 - [ ] TypeScript estricto, sin `any`
 
-### HU-23: Listado de productos + búsqueda + contador (F1, F2, F3)
+### US-05: Listado + búsqueda + contador (F1, F2, F3)
 
-**Componentes a crear**:
-- `ProductList` — lista todos los productos del API
-- `SearchBar` — filtra la lista por nombre/descripción en el cliente
-- `RecordCount` — muestra `N resultados`
+> Spec completa: [`docs/user-stories/US-05-listado-busqueda-productos.md`](docs/user-stories/US-05-listado-busqueda-productos.md)
 
-**Criterios de aceptación**:
-- [ ] Al cargar la página se muestra la lista completa de productos
-- [ ] El buscador filtra en tiempo real (sin llamada al API)
-- [ ] Se muestra el contador de registros actualizándose con el filtro
-- [ ] Estado de carga (loading) y estado de error visibles
-- [ ] Sin frameworks de estilos (CSS propio / CSS Modules)
+**Como** usuario del portal bancario  
+**Quiero** ver, buscar y conocer la cantidad de productos financieros disponibles  
+**Para** explorar fácilmente las opciones del banco
 
-### HU-24: Formulario crear producto (F4)
-
-**Página**: `/products/new`
+**Componentes**: `ProductList`, `ProductCard`, `SearchBar`, `RecordCount`
 
 **Criterios de aceptación**:
-- [ ] Campos: id, name, description, logo, date_release, date_revision
-- [ ] Validaciones client-side antes de enviar:
-  - id: requerido, 3-10 chars, ID no existente (llama `/verification/:id`)
-  - name: requerido, 5-100 chars
-  - description: requerido, 10-200 chars
-  - logo: requerido
-  - date_release: requerido, ≥ hoy
-  - date_revision: requerido, exactamente 1 año después de date_release (auto-calculado)
-- [ ] Errores mostrados bajo cada campo
-- [ ] Botón "Agregar" envía al API, redirige al listado en éxito
-- [ ] Botón "Reiniciar" limpia todos los campos
+- [ ] Lista completa al cargar, estado de carga y error visibles
+- [ ] Búsqueda filtra en tiempo real, sin llamar al API
+- [ ] Contador actualizado con el filtro activo
+- [ ] CSS propio (sin frameworks de estilos)
 
-### HU-25: Editar producto (F5 — deseable)
+### US-06: Formulario crear producto (F4)
 
-**Página**: `/products/[id]/edit`
+> Spec completa: [`docs/user-stories/US-06-crear-producto.md`](docs/user-stories/US-06-crear-producto.md)
+
+**Como** administrador del portal bancario  
+**Quiero** agregar nuevos productos financieros con validaciones  
+**Para** ampliar el catálogo del banco
 
 **Criterios de aceptación**:
-- [ ] Pre-carga los valores actuales del producto
-- [ ] Campo `id` deshabilitado (no editable)
-- [ ] Mismas validaciones de F4 (excepto verificación de unicidad de ID)
-- [ ] Botón "Actualizar" llama PUT al API
-- [ ] Redirige al listado en éxito
+- [ ] Validaciones por campo según `docs/API_FRONTEND.md`
+- [ ] ID verifica unicidad al perder foco (`/verification/:id`)
+- [ ] Fecha Revisión auto-calculada (1 año después de Fecha Liberación)
+- [ ] "Agregar" no envía si hay errores; "Reiniciar" limpia todo
 
-### HU-26: Tests unitarios Frontend (Jest)
+### US-07: Editar producto (F5 — deseable)
+
+> Spec completa: [`docs/user-stories/US-07-editar-producto.md`](docs/user-stories/US-07-editar-producto.md)
+
+**Como** administrador del portal bancario  
+**Quiero** editar productos financieros existentes  
+**Para** mantener actualizado el catálogo sin perder el identificador original
 
 **Criterios de aceptación**:
-- [ ] `productService.test.ts` — mock de fetch, verifica llamadas al API
-- [ ] `SearchBar.test.tsx` — verifica filtrado correcto
-- [ ] `ProductForm.test.tsx` — verifica validaciones (mínimo: id vacío, date_release pasada)
-- [ ] Cobertura ≥ 70% en componentes principales
+- [ ] Pre-carga valores actuales; campo ID deshabilitado
+- [ ] Mismas validaciones que US-06 excepto verificación de unicidad de ID
+
+### TASK-19: Tests unitarios Frontend (Jest)
+
+**Criterios de aceptación**:
+- [ ] `productService.test.ts`, `SearchBar.test.tsx`, `ProductForm.test.tsx`
+- [ ] Cobertura ≥ 70%
 
 ---
 
 ## Fase 5 — CI/CD
 
-> Configurable en paralelo con las fases anteriores.
-
-### HU-27: GitHub Actions — Pipeline CI
+### TASK-20: GitHub Actions — Pipeline CI
 
 **Archivo a crear**: `.github/workflows/ci.yml`
 
-**Jobs**:
-
-```
-backend-ms-cliente:
-  - Checkout
-  - Setup Java 21
-  - ./gradlew build -x test
-  - ./gradlew test
-
-backend-ms-cuenta:
-  - Checkout
-  - Setup Java 21
-  - ./gradlew build -x test
-  - ./gradlew test
-
-frontend:
-  - Checkout
-  - Setup Node 20
-  - npm ci
-  - npm run build
-  - npm test -- --coverage
-```
+**Jobs**: `backend-ms-cliente`, `backend-ms-cuenta`, `frontend`  
+**Trigger**: push a `main`/`develop`, PR a `main`
 
 **Criterios de aceptación**:
-- [ ] Pipeline ejecuta en push a `main` y `develop`
-- [ ] Pipeline ejecuta en Pull Requests a `main`
-- [ ] Tests de backend y frontend pasan en CI
-- [ ] Build de Docker no falla (puede ser job adicional opcional)
+- [ ] Build y tests pasan en verde en GitHub Actions
 
 ---
 
 ## Fase 6 — Entregables finales
 
-### HU-28: Generar `BaseDatos.sql`
-
-El ejercicio pide un script de BD con el nombre `BaseDatos.sql`.
+### TASK-21: Generar `BaseDatos.sql`
 
 ```bash
-# Exportar desde el contenedor PostgreSQL:
 docker exec banco-postgres pg_dump -U postgres banco_db > backend/BaseDatos.sql
 ```
 
-**Criterios de aceptación**:
-- [ ] `backend/BaseDatos.sql` contiene schema completo + datos de prueba
-- [ ] El archivo es ejecutable desde cero (CREATE TABLE, INSERT)
+### TASK-22: Colección Postman
 
-### HU-29: Colección Postman
+- Carpetas: "MS-Cliente" y "MS-Cuenta"
+- Variables: `base_cliente`, `base_cuenta`
+- Casos del ejercicio: 3 clientes, 5 cuentas, 4 movimientos, reporte Marianela
 
-**Criterios de aceptación**:
-- [ ] Colección con todos los endpoints de MS-Cliente y MS-Cuenta
-- [ ] Variables de entorno: `{{base_cliente}}=http://localhost:8081`, `{{base_cuenta}}=http://localhost:8082`
-- [ ] Requests de los casos de uso del ejercicio: crear clientes, cuentas, movimientos, reporte
+### TASK-23: Actualizar README.md
 
-### HU-30: Actualizar README.md
-
-**Criterios de aceptación**:
-- [ ] Quick Start funcional y verificado
-- [ ] Referencias correctas a los docs (`ARCHITECTURE.md`, no `ARQUITECTURA.md`)
-- [ ] Instrucciones para correr el backend Node.js de productos
+- Quick Start verificado y funcional
+- Referencias a docs correctas
+- Instrucciones para el backend Node.js de productos
 
 ---
 
-## Orden de implementación recomendado
+## Orden de implementación
 
 ```
-Fase 1 (BD)        → HU-01 → HU-02 → HU-03 → HU-04
-                               ↓
-Fase 2 (MS-Cliente) → HU-05 → HU-06 → HU-07 → HU-08 → HU-09 → HU-10 → HU-11
-                               ↓ (paralelo)
-Fase 3 (MS-Cuenta)  → HU-12 → HU-13 → HU-14 → HU-15 → HU-16 → HU-17 → HU-18 → HU-19 → HU-20 → HU-21
-                               ↓ (paralelo)
-Fase 4 (Frontend)   → HU-22 → HU-23 → HU-24 → HU-25 → HU-26
-                               ↓ (cualquier momento)
-Fase 5 (CI/CD)      → HU-27
-                               ↓ (al final)
-Fase 6 (Entregables) → HU-28 → HU-29 → HU-30
+Fase 1: TASK-01 → TASK-02 → TASK-03 → TASK-04
+                     ↓
+Fase 2: TASK-05 → TASK-06 → US-01 → TASK-07 → TASK-08 → TASK-09 → TASK-10
+                     ↓ (puede ir en paralelo con Fase 2)
+Fase 3: TASK-11 → TASK-12 → TASK-13 → US-02 → US-03 → US-04 → TASK-14 → TASK-15 → TASK-16 → TASK-17
+                     ↓ (puede ir en paralelo con Fases 2 y 3)
+Fase 4: TASK-18 → US-05 → US-06 → US-07 → TASK-19
+                     ↓ (en cualquier momento)
+Fase 5: TASK-20
+                     ↓ (al finalizar todo)
+Fase 6: TASK-21 → TASK-22 → TASK-23
 ```
-
-Fases 2, 3 y 4 pueden ejecutarse en paralelo una vez que la Fase 1 está completa.
 
 ---
 
-## Resumen de cobertura por requisito
+## Cobertura de requisitos
 
-| Requisito | HU | Estado |
+| Requisito ejercicio | Ítem | Estado |
 |---|---|---|
-| F1 Backend — CRUD Cliente | HU-07 | Pendiente |
-| F1 Backend — CRUD Cuenta | HU-15 | Pendiente |
-| F1 Backend — CRUD Movimiento | HU-16 | Pendiente |
-| F2 Backend — Registrar movimiento con saldo | HU-16 | Pendiente |
-| F3 Backend — Saldo no disponible | HU-16 | Pendiente |
-| F4 Backend — Reporte estado de cuenta | HU-17 | Pendiente |
-| F5 Backend — Test unitario Cliente | HU-09 | Pendiente |
-| F6 Backend — Test integración (deseable) | HU-21 | Pendiente |
-| Comunicación asincrónica | HU-10, HU-11, HU-19, HU-20 | Pendiente |
-| F1 Frontend — Listado productos | HU-23 | Pendiente |
-| F2 Frontend — Búsqueda | HU-23 | Pendiente |
-| F3 Frontend — Contador | HU-23 | Pendiente |
-| F4 Frontend — Agregar producto | HU-24 | Pendiente |
-| F5 Frontend — Editar (deseable) | HU-25 | Pendiente |
-| Tests frontend ≥ 70% coverage | HU-26 | Pendiente |
-| CI/CD | HU-27 | Pendiente |
+| F1 Backend — CRUD Cliente | US-01 | Pendiente |
+| F1 Backend — CRUD Cuenta | US-02 | Pendiente |
+| F1 Backend — CRUD Movimiento | US-03 | Pendiente |
+| F2 Backend — Registrar movimiento | US-03 | Pendiente |
+| F3 Backend — Saldo no disponible | US-03 | Pendiente |
+| F4 Backend — Reporte estado de cuenta | US-04 | Pendiente |
+| F5 Backend — Test unitario Cliente | TASK-08 | Pendiente |
+| F6 Backend — Test integración (deseable) | TASK-17 | Pendiente |
+| Comunicación asincrónica | TASK-09, TASK-10, TASK-15, TASK-16 | Pendiente |
+| F1 Frontend — Listado productos | US-05 | Pendiente |
+| F2 Frontend — Búsqueda | US-05 | Pendiente |
+| F3 Frontend — Contador | US-05 | Pendiente |
+| F4 Frontend — Agregar producto | US-06 | Pendiente |
+| F5 Frontend — Editar (deseable) | US-07 | Pendiente |
+| Tests frontend ≥ 70% coverage | TASK-19 | Pendiente |
+| CI/CD | TASK-20 | Pendiente |
 | Docker Compose (F7) | ✅ Completo | Listo |
