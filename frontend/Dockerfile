@@ -14,6 +14,10 @@ RUN npm ci
 # Copiar código fuente
 COPY . .
 
+# NEXT_PUBLIC_ vars must be available at build time to be inlined in client bundle
+ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:3002
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+
 # Build Next.js
 RUN npm run build
 
