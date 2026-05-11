@@ -89,6 +89,10 @@ management:
     health:
       show-details: when-authorized
 
+# Microservices URLs
+ms-cuenta:
+  url: http://localhost:8082
+
 ---
 # Profile: Docker
 spring:
@@ -111,4 +115,7 @@ server:
 logging:
   level:
     root: WARN
-    com.msclient: INFO
+    com.ms_cliente: INFO
+
+ms-cuenta:
+  url: http://ms-cuenta:8082
