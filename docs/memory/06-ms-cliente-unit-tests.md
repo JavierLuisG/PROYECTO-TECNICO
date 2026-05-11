@@ -1,7 +1,5 @@
 # TASK-08 — Tests Unitarios Dominio Cliente (MS-Cliente)
-
-**Rama**: `feat/US-01-gestion-clientes`  
-**Commit**: `test(ms-cliente): add unit tests for Cliente domain model`  
+ 
 **Fecha implementación**: 2026-05-10
 
 ---
