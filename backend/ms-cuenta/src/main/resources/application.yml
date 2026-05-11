@@ -43,30 +43,6 @@ spring:
     password: guest
     connection-timeout: 10000
   
-  # Spring Cloud Stream (RabbitMQ)
-  cloud:
-    stream:
-      bindings:
-        # Publisher: Movimientos registrados
-        movimiento-registrado-out-0:
-          destination: movimiento-registrado-exchange
-          content-type: application/json
-        
-        # Consumer: Eventos de cliente (futuro, para sincronización)
-        cliente-creado-in-0:
-          destination: cliente-creado-exchange
-          group: ms-cuenta-group
-          content-type: application/json
-      
-      rabbit:
-        bindings:
-          movimiento-registrado-out-0:
-            producer:
-              routing-key-expression: "'movimiento'"
-          cliente-creado-in-0:
-            consumer:
-              queue-name-group-only: true
-
 # Server
 server:
   port: 8082
