@@ -54,6 +54,18 @@ app.get('/bp/products', (req, res) => {
   res.json({ data: products });
 });
 
+// GET /bp/products/:id — obtener uno por ID
+app.get('/bp/products/:id', (req, res) => {
+  const product = products.find((p) => p.id === req.params.id);
+  if (!product) {
+    return res.status(404).json({
+      name: 'NotFoundError',
+      message: 'Not product found with that identifier',
+    });
+  }
+  res.json({ data: product });
+});
+
 // GET /bp/products/verification/:id — verificar si existe
 app.get('/bp/products/verification/:id', (req, res) => {
   const exists = products.some((p) => p.id === req.params.id);
