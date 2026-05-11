@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useProducts } from '../application/hooks/useProducts';
 import { useSearch } from '../application/hooks/useSearch';
 import { ProductList } from '../presentation/components/ProductList/ProductList';
@@ -20,6 +21,9 @@ export default function HomePage() {
       <section className={styles.content}>
         <div className={styles.toolbar}>
           <SearchBar value={searchTerm} onChange={setSearchTerm} />
+          <Link href="/products/new" className={styles.btnAdd}>
+            Agregar
+          </Link>
         </div>
 
         <RecordCount count={filteredProducts.length} />
