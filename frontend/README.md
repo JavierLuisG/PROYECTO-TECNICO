@@ -1,20 +1,21 @@
 # Frontend — Catálogo de Productos Financieros
 
-Aplicación **Next.js 16.2.6** con **React 19** y **TypeScript 5**, siguiendo **arquitectura limpia** por capas.
+Aplicación **Next.js 16.2.6** con **React 19** y **TypeScript 5** siguiendo **arquitectura limpia por capas**.
 
-Consume el API Node.js en `http://localhost:3002` (backend provisto por el ejercicio, no forma parte del stack Docker bancario).
+**Puerto**: 3000  
+Consume el Mock API de productos en `http://localhost:3002` (incluido en Docker Compose como servicio `mock-api`).
 
 ---
 
-## Funcionalidades (SemiSenior)
+## Funcionalidades implementadas
 
-| Feature | Estado | Descripción |
+| Feature | Ruta | Descripción |
 |---|---|---|
-| F1 | Pendiente | Listado de productos financieros |
-| F2 | Pendiente | Búsqueda por texto |
-| F3 | Pendiente | Contador de registros |
-| F4 | Pendiente | Agregar producto (formulario con validaciones) |
-| F5 | Pendiente (deseable) | Editar producto |
+| F1 — Listado | `/` | Lista completa de productos financieros con estado de carga y error |
+| F2 — Búsqueda | `/` | Filtro en tiempo real por nombre o descripción (sin llamar al API) |
+| F3 — Contador | `/` | Contador de registros actualizado con el filtro activo |
+| F4 — Crear | `/products/new` | Formulario con validaciones por campo, verificación de ID único y fecha de revisión auto-calculada |
+| F5 — Editar | `/products/[id]/edit` | Formulario pre-cargado con datos actuales, campo ID deshabilitado |
 
 ---
 
@@ -23,23 +24,32 @@ Consume el API Node.js en `http://localhost:3002` (backend provisto por el ejerc
 ```
 src/
 ├── domain/
-│   └── models/            ← Product.ts — interfaz de dominio pura
+│   └── models/Product.ts          ← interfaz Product + tipos CreateProductPayload, UpdateProductPayload
 │
 ├── application/
-│   ├── usecases/          ← listProducts.ts, createProduct.ts, updateProduct.ts, deleteProduct.ts
-│   └── hooks/             ← useProducts.ts, useProductForm.ts, useSearch.ts
+│   ├── usecases/
+│   │   ├── createProduct.ts       ← llama productService.create()
+│   │   └── updateProduct.ts       ← llama productService.update()
+│   └── hooks/
+│       ├── useProducts.ts         ← fetch inicial + estado loading/error + refresh()
+│       ├── useProductForm.ts      ← estado del formulario, validaciones, ID async, date_revision
+│       └── useSearch.ts           ← filtro en memoria por nombre y descripción
 │
 ├── infrastructure/
-│   └── api/               ← productService.ts — fetch al API :3002
+│   └── api/productService.ts      ← getAll, getById, create, update, remove, verifyId
 │
 └── presentation/
-    ├── components/        ← ProductCard, ProductList, SearchBar, RecordCount, Modal, ProductForm
-    └── styles/            ← CSS Modules por componente (sin frameworks de estilos)
+    └── components/
+        ├── ProductList/           ← tabla con estados: loading, error, vacío, con datos
+        ├── ProductCard/           ← fila de tabla + botón Editar
+        ├── ProductForm/           ← formulario reutilizable (crear y editar)
+        ├── SearchBar/             ← input de búsqueda accesible
+        └── RecordCount/           ← contador de resultados con aria-live
 ```
 
-**Regla de dependencia**: `presentation` → `application` → `domain`. `infrastructure` es llamado desde `application`.
+**Regla de dependencia**: `presentation` → `application` → `domain`. `infrastructure` se llama solo desde `application`.
 
-> **Nota sobre estilos**: El ejercicio exige implementación sin frameworks de estilos ni componentes prefabricados. Se usa **CSS Modules** propio para respetar la restricción. Tailwind no se utiliza aunque esté en el proyecto.
+> Los estilos usan **CSS Modules** por componente (sin Tailwind, sin frameworks de estilos), conforme exige el ejercicio.
 
 ---
 
@@ -48,187 +58,133 @@ src/
 ```
 frontend/
 ├── src/
-│   ├── app/                        # Next.js App Router
+│   ├── app/                            # Next.js App Router
 │   │   ├── layout.tsx
-│   │   ├── page.tsx                # Home → listado + búsqueda
+│   │   ├── page.tsx                    # Home: listado + búsqueda (F1, F2, F3)
 │   │   └── products/
-│   │       ├── new/
-│   │       │   └── page.tsx        # Formulario crear (F4)
-│   │       └── [id]/
-│   │           └── edit/
-│   │               └── page.tsx    # Formulario editar (F5)
-│   │
-│   ├── domain/
-│   │   └── models/
-│   │       └── Product.ts
-│   │
+│   │       ├── new/page.tsx            # Crear producto (F4)
+│   │       └── [id]/edit/page.tsx      # Editar producto (F5)
+│   ├── domain/models/Product.ts
 │   ├── application/
-│   │   ├── usecases/
-│   │   │   ├── listProducts.ts
-│   │   │   ├── createProduct.ts
-│   │   │   ├── updateProduct.ts
-│   │   │   └── deleteProduct.ts
-│   │   └── hooks/
-│   │       ├── useProducts.ts
-│   │       ├── useProductForm.ts
-│   │       └── useSearch.ts
-│   │
-│   ├── infrastructure/
-│   │   └── api/
-│   │       └── productService.ts
-│   │
-│   └── presentation/
-│       ├── components/
-│       │   ├── ProductList/
-│       │   │   ├── ProductList.tsx
-│       │   │   └── ProductList.module.css
-│       │   ├── ProductCard/
-│       │   ├── SearchBar/
-│       │   ├── RecordCount/
-│       │   ├── ProductForm/
-│       │   └── Modal/
-│       └── styles/
-│           └── globals.css
+│   │   ├── usecases/{create,update}Product.ts
+│   │   └── hooks/{useProducts,useProductForm,useSearch}.ts
+│   ├── infrastructure/api/productService.ts
+│   └── presentation/components/{ProductList,ProductCard,ProductForm,SearchBar,RecordCount}/
 │
-├── __tests__/                      # Tests Jest
-│   ├── usecases/
-│   ├── components/
-│   └── hooks/
+├── __tests__/
+│   ├── infrastructure/api/productService.test.ts
+│   ├── application/hooks/{useProducts,useProductForm,useSearch}.test.ts
+│   └── presentation/components/{SearchBar,ProductForm,ProductList}.test.tsx
 │
-├── package.json
+├── __mocks__/
+│   ├── styleMock.ts                    # CSS modules mock para Jest
+│   └── next-link.tsx                   # next/link mock para Jest (JSDOM)
+│
+├── babel.config.js                     # next/babel con runtime: automatic (sin warning React 19)
+├── jest.config.js
+├── jest.setup.ts
+├── next.config.ts
 ├── tsconfig.json
-└── next.config.ts
+└── package.json
 ```
+
+---
+
+## Validaciones del formulario (F4 y F5)
+
+| Campo | Reglas |
+|---|---|
+| `id` | Requerido · 3–10 chars · no debe existir (verificado vía `GET /bp/products/verification/:id` al perder foco) |
+| `name` | Requerido · 5–100 chars |
+| `description` | Requerido · 10–200 chars |
+| `logo` | Requerido |
+| `date_release` | Requerido · fecha ≥ hoy |
+| `date_revision` | Auto-calculado: exactamente 1 año después de `date_release` · campo `readOnly` |
+
+En modo edición (F5) el campo `id` está deshabilitado y no se verifica unicidad.
 
 ---
 
 ## API que consume
 
-Backend Node.js (externo al proyecto Docker), puerto **3002**.
+Mock API Node.js incluido en Docker Compose (`mock-api`, puerto **3002**).
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| GET | `/bp/products` | Listar todos |
-| POST | `/bp/products` | Crear producto |
-| PUT | `/bp/products/:id` | Actualizar producto |
-| DELETE | `/bp/products/:id` | Eliminar producto |
-| GET | `/bp/products/verification/:id` | Verificar si el ID ya existe |
+| `GET` | `/bp/products` | Listar todos los productos |
+| `GET` | `/bp/products/:id` | Obtener producto por ID |
+| `POST` | `/bp/products` | Crear producto |
+| `PUT` | `/bp/products/:id` | Actualizar producto |
+| `DELETE` | `/bp/products/:id` | Eliminar producto |
+| `GET` | `/bp/products/verification/:id` | Verificar si el ID ya existe |
 
-Ver spec completa en [`../docs/API_FRONTEND.md`](../docs/API_FRONTEND.md).
-
-### Iniciar el backend Node.js
-
-```bash
-# En la carpeta del proyecto provisto por el ejercicio:
-npm install
-npm run start:dev
-# Disponible en http://localhost:3002
-```
-
----
-
-## Modelo de producto
-
-```typescript
-interface Product {
-  id: string;           // Identificador único (3-10 chars)
-  name: string;         // Nombre (5-100 chars)
-  description: string;  // Descripción (10-200 chars)
-  logo: string;         // URL del logo
-  date_release: string; // YYYY-MM-DD, ≥ hoy
-  date_revision: string;// YYYY-MM-DD, exactamente 1 año después de date_release
-}
-```
-
----
-
-## Validaciones del formulario (F4)
-
-| Campo | Regla |
-|---|---|
-| `id` | Requerido, 3-10 chars, no debe existir (`/verification/:id`) |
-| `name` | Requerido, 5-100 chars |
-| `description` | Requerido, 10-200 chars |
-| `logo` | Requerido |
-| `date_release` | Requerido, fecha ≥ hoy |
-| `date_revision` | Requerido, auto-calculado: exactamente 1 año después de `date_release` |
-
----
-
-## Levantar el frontend
-
-### Con Docker Compose
-
-```bash
-# Desde raíz del proyecto:
-docker compose up frontend -d
-# Disponible en http://localhost:3000
-```
-
-### Local sin Docker
-
-```bash
-cd frontend
-npm install
-npm run dev
-# Disponible en http://localhost:3000
-```
-
-**Variables de entorno** (`.env.local`):
-
-```
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3002
-```
+Spec completa en [`../docs/API_FRONTEND.md`](../docs/API_FRONTEND.md).
 
 ---
 
 ## Tests
 
-**Framework**: Jest + React Testing Library
+**Framework**: Jest 29 + React Testing Library 16
 
 ```bash
-npm test               # ejecuta tests
-npm test -- --coverage # con reporte de cobertura
+npm test                    # ejecuta los 74 tests
+npm run test:coverage       # con reporte de cobertura (umbral ≥ 70%)
 ```
 
-**Cobertura objetivo**: ≥ 70% en componentes y hooks.
+**Cobertura actual: 94% statements · 92% branches**
 
-| Archivo test | Qué verifica |
+| Archivo de test | Qué verifica |
 |---|---|
-| `productService.test.ts` | Llamadas al API (fetch mockeado) |
-| `SearchBar.test.tsx` | Filtrado en tiempo real |
-| `ProductForm.test.tsx` | Validaciones: id vacío, fecha pasada, etc. |
+| `productService.test.ts` | Todos los métodos del servicio (mock de axios.create) |
+| `useProducts.test.ts` | Estado inicial, fetch exitoso, error, refresh |
+| `useProductForm.test.ts` | handleChange, handleIdBlur, handleSubmit, handleReset, validaciones |
+| `useSearch.test.ts` | Filtrado por nombre, descripción, case-insensitive, término vacío |
+| `SearchBar.test.tsx` | Render, placeholder, onChange, aria-label |
+| `ProductForm.test.tsx` | 6 campos, errores, disableId, submitLabel, isSubmitting |
+| `ProductList.test.tsx` | Estados: loading, error, vacío, con datos · ProductCard · RecordCount |
 
 ---
 
-## Verificar funcionamiento
+## Levantar
+
+### Con Docker Compose (recomendado)
 
 ```bash
-# Build de producción (verifica que compile sin errores)
-npm run build
+# Desde la raíz del proyecto:
+docker compose up frontend mock-api -d
+# Frontend disponible en http://localhost:3000
+```
 
-# Lint
-npm run lint
+### Local sin Docker
 
-# Tests
-npm test
+```bash
+# Primero levantar el mock-api (o arrancarlo vía Docker):
+docker compose up mock-api -d
+
+cd frontend
+npm install
+npm run dev         # http://localhost:3000
+```
+
+**Variable de entorno** (`.env.local`):
+
+```
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3002
+```
+
+### Build de producción
+
+```bash
+npm run build       # verifica compilación TypeScript + Next.js build
+npm start           # sirve el build de producción
 ```
 
 ---
 
-## Troubleshooting
+## TypeScript
 
-| Error | Solución |
-|---|---|
-| `Cannot find module` | `npm install` |
-| API no responde (3002) | Verificar que el backend Node.js esté corriendo |
-| CORS error | Verificar `NEXT_PUBLIC_API_BASE_URL` en `.env.local` |
-| Puerto 3000 ocupado | `next dev -p 3001` |
+El proyecto usa TypeScript estricto (`"strict": true`). Para verificar tipos sin emitir:
 
----
-
-## Documentación
-
-- [API que consume el frontend](../docs/API_FRONTEND.md)
-- [Arquitectura del sistema](../docs/ARCHITECTURE.md)
-- [Plan de acción](../ACTION_PLAN.md)
+```bash
+npx tsc --noEmit
+```

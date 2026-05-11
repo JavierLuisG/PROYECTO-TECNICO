@@ -1,0 +1,589 @@
+{
+  "info": {
+    "name": "Sistema Bancario — Prueba Técnica SemiSenior",
+    "description": "Colección completa de endpoints para MS-Cliente (puerto 8081) y MS-Cuenta (puerto 8082). Incluye los casos del ejercicio: 3 clientes, 5 cuentas, 4 movimientos y reporte de Marianela.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_cliente",
+      "value": "http://localhost:8081/api",
+      "type": "string",
+      "description": "Base URL de MS-Cliente"
+    },
+    {
+      "key": "base_cuenta",
+      "value": "http://localhost:8082/api",
+      "type": "string",
+      "description": "Base URL de MS-Cuenta"
+    },
+    {
+      "key": "cliente_jose",
+      "value": "00000000-0000-0000-0002-000000000001",
+      "type": "string",
+      "description": "ID de Jose Lema"
+    },
+    {
+      "key": "cliente_marianela",
+      "value": "00000000-0000-0000-0002-000000000002",
+      "type": "string",
+      "description": "ID de Marianela Montalvo"
+    },
+    {
+      "key": "cliente_juan",
+      "value": "00000000-0000-0000-0002-000000000003",
+      "type": "string",
+      "description": "ID de Juan Osorio"
+    },
+    {
+      "key": "cuenta_478758",
+      "value": "00000000-0000-0000-0003-000000000001",
+      "type": "string",
+      "description": "Cuenta Ahorro 478758 (Jose Lema) — saldo inicial 2000"
+    },
+    {
+      "key": "cuenta_585545",
+      "value": "00000000-0000-0000-0003-000000000002",
+      "type": "string",
+      "description": "Cuenta Corriente 585545 (Jose Lema) — saldo inicial 1000"
+    },
+    {
+      "key": "cuenta_225487",
+      "value": "00000000-0000-0000-0003-000000000003",
+      "type": "string",
+      "description": "Cuenta Corriente 225487 (Marianela) — saldo inicial 100"
+    },
+    {
+      "key": "cuenta_496825",
+      "value": "00000000-0000-0000-0003-000000000004",
+      "type": "string",
+      "description": "Cuenta Ahorro 496825 (Marianela) — saldo inicial 540"
+    },
+    {
+      "key": "cuenta_495878",
+      "value": "00000000-0000-0000-0003-000000000005",
+      "type": "string",
+      "description": "Cuenta Ahorro 495878 (Juan Osorio) — saldo inicial 0"
+    }
+  ],
+  "item": [
+    {
+      "name": "MS-Cliente",
+      "description": "CRUD completo de clientes — Puerto 8081",
+      "item": [
+        {
+          "name": "Listar clientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_cliente}}/clientes",
+              "host": ["{{base_cliente}}"],
+              "path": ["clientes"]
+            },
+            "description": "Retorna la lista completa de clientes (Jose Lema, Marianela Montalvo, Juan Osorio)"
+          }
+        },
+        {
+          "name": "Obtener cliente — Jose Lema",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_cliente}}/clientes/{{cliente_jose}}",
+              "host": ["{{base_cliente}}"],
+              "path": ["clientes", "{{cliente_jose}}"]
+            },
+            "description": "Obtiene los datos completos de Jose Lema"
+          }
+        },
+        {
+          "name": "Obtener cliente — Marianela Montalvo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_cliente}}/clientes/{{cliente_marianela}}",
+              "host": ["{{base_cliente}}"],
+              "path": ["clientes", "{{cliente_marianela}}"]
+            }
+          }
+        },
+        {
+          "name": "Obtener cliente — Juan Osorio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_cliente}}/clientes/{{cliente_juan}}",
+              "host": ["{{base_cliente}}"],
+              "path": ["clientes", "{{cliente_juan}}"]
+            }
+          }
+        },
+        {
+          "name": "Crear cliente (nuevo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana Torres\",\n  \"genero\": \"F\",\n  \"edad\": 29,\n  \"identificacion\": \"9999999999\",\n  \"direccion\": \"Av. Amazonas 123\",\n  \"telefono\": \"099999999\",\n  \"contrasena\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_cliente}}/clientes",
+              "host": ["{{base_cliente}}"],
+              "path": ["clientes"]
+            },
+            "description": "Crea un nuevo cliente. El evento cliente-creado se publica en RabbitMQ y MS-Cuenta sincroniza su ClienteRef."
+          }
+        },
+        {
+          "name": "Crear cliente — identificacion duplicada (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Duplicado Test\",\n  \"genero\": \"M\",\n  \"edad\": 25,\n  \"identificacion\": \"1234567890\",\n  \"direccion\": \"Dirección cualquiera\",\n  \"telefono\": \"099000000\",\n  \"contrasena\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_cliente}}/clientes",
+              "host": ["{{base_cliente}}"],
+              "path": ["clientes"]
+            },
+            "description": "Debe retornar 400 — identificacion 1234567890 ya existe (Jose Lema)"
+          }
+        },
+        {
+          "name": "Actualizar cliente — Jose Lema",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Jose Lema\",\n  \"genero\": \"M\",\n  \"edad\": 31,\n  \"identificacion\": \"1234567890\",\n  \"direccion\": \"Otavalo sn/n y Los Ponticipes\",\n  \"telefono\": \"098254785\",\n  \"contrasena\": \"password123\",\n  \"estado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_cliente}}/clientes/{{cliente_jose}}",
+              "host": ["{{base_cliente}}"],
+              "path": ["clientes", "{{cliente_jose}}"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar cliente — ID inexistente (404)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_cliente}}/clientes/00000000-0000-0000-0099-000000000099",
+              "host": ["{{base_cliente}}"],
+              "path": ["clientes", "00000000-0000-0000-0099-000000000099"]
+            },
+            "description": "Debe retornar 404 — cliente no encontrado"
+          }
+        }
+      ]
+    },
+    {
+      "name": "MS-Cuenta",
+      "description": "CRUD de cuentas, movimientos y reporte — Puerto 8082",
+      "item": [
+        {
+          "name": "Cuentas",
+          "item": [
+            {
+              "name": "Listar cuentas",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_cuenta}}/cuentas",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["cuentas"]
+                },
+                "description": "Retorna las 5 cuentas del ejercicio"
+              }
+            },
+            {
+              "name": "Listar cuentas de Jose Lema",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_cuenta}}/cuentas?clienteId={{cliente_jose}}",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["cuentas"],
+                  "query": [
+                    {
+                      "key": "clienteId",
+                      "value": "{{cliente_jose}}"
+                    }
+                  ]
+                },
+                "description": "Filtra por clienteId — Jose tiene cuentas 478758 y 585545"
+              }
+            },
+            {
+              "name": "Obtener cuenta 478758 (Jose — Ahorro)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_cuenta}}/cuentas/{{cuenta_478758}}",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["cuentas", "{{cuenta_478758}}"]
+                }
+              }
+            },
+            {
+              "name": "Obtener cuenta 225487 (Marianela — Corriente)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_cuenta}}/cuentas/{{cuenta_225487}}",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["cuentas", "{{cuenta_225487}}"]
+                }
+              }
+            },
+            {
+              "name": "Crear cuenta (nueva)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clienteId\": \"{{cliente_juan}}\",\n  \"numeroCuenta\": \"999001\",\n  \"tipoCuenta\": \"Ahorro\",\n  \"saldoInicial\": 500.00\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_cuenta}}/cuentas",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["cuentas"]
+                },
+                "description": "Crea una nueva cuenta para Juan Osorio. El clienteId debe existir en cliente_ref."
+              }
+            },
+            {
+              "name": "Actualizar cuenta",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clienteId\": \"{{cliente_jose}}\",\n  \"numeroCuenta\": \"478758\",\n  \"tipoCuenta\": \"Ahorro\",\n  \"saldoInicial\": 2000.00,\n  \"estado\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_cuenta}}/cuentas/{{cuenta_478758}}",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["cuentas", "{{cuenta_478758}}"]
+                }
+              }
+            },
+            {
+              "name": "Eliminar cuenta — con movimientos (400)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_cuenta}}/cuentas/{{cuenta_478758}}",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["cuentas", "{{cuenta_478758}}"]
+                },
+                "description": "Debe retornar 400 — la cuenta 478758 tiene movimientos asociados"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Movimientos",
+          "item": [
+            {
+              "name": "Listar movimientos",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_cuenta}}/movimientos",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["movimientos"]
+                },
+                "description": "Retorna los 4 movimientos del ejercicio"
+              }
+            },
+            {
+              "name": "Obtener movimiento (retiro 478758)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_cuenta}}/movimientos/00000000-0000-0000-0004-000000000001",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["movimientos", "00000000-0000-0000-0004-000000000001"]
+                },
+                "description": "Retiro -575 en cuenta 478758 (Jose Lema)"
+              }
+            },
+            {
+              "name": "Registrar movimiento — Depósito en cuenta 585545",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cuentaId\": \"{{cuenta_585545}}\",\n  \"tipoMovimiento\": \"Deposito\",\n  \"valor\": 200.00,\n  \"descripcion\": \"Deposito de prueba\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_cuenta}}/movimientos",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["movimientos"]
+                },
+                "description": "Depósito en cuenta Corriente 585545 de Jose Lema. Publica evento movimiento-registrado en RabbitMQ."
+              }
+            },
+            {
+              "name": "Registrar movimiento — Retiro en cuenta 225487",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cuentaId\": \"{{cuenta_225487}}\",\n  \"tipoMovimiento\": \"Retiro\",\n  \"valor\": -100.00,\n  \"descripcion\": \"Retiro de prueba\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_cuenta}}/movimientos",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["movimientos"]
+                },
+                "description": "Retiro de 100 en cuenta Corriente 225487 de Marianela (saldo actual 700, suficiente)."
+              }
+            },
+            {
+              "name": "Registrar movimiento — Saldo insuficiente (400)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cuentaId\": \"{{cuenta_496825}}\",\n  \"tipoMovimiento\": \"Retiro\",\n  \"valor\": -999.00,\n  \"descripcion\": \"Retiro que excede el saldo\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_cuenta}}/movimientos",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["movimientos"]
+                },
+                "description": "Debe retornar 400 con mensaje 'Saldo no disponible'. La cuenta 496825 tiene saldo 0."
+              }
+            },
+            {
+              "name": "Registrar movimiento — Valor cero (400)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cuentaId\": \"{{cuenta_585545}}\",\n  \"tipoMovimiento\": \"Deposito\",\n  \"valor\": 0,\n  \"descripcion\": \"Valor inválido\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_cuenta}}/movimientos",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["movimientos"]
+                },
+                "description": "Debe retornar 400 — el valor no puede ser cero"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reporte Estado de Cuenta",
+          "item": [
+            {
+              "name": "Reporte Marianela — año 2024",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_cuenta}}/reportes?clienteId={{cliente_marianela}}&desde=2024-01-01&hasta=2024-12-31",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["reportes"],
+                  "query": [
+                    {
+                      "key": "clienteId",
+                      "value": "{{cliente_marianela}}"
+                    },
+                    {
+                      "key": "desde",
+                      "value": "2024-01-01"
+                    },
+                    {
+                      "key": "hasta",
+                      "value": "2024-12-31"
+                    }
+                  ]
+                },
+                "description": "Caso principal del ejercicio: reporte de Marianela Montalvo para el año 2024. Muestra cuentas 225487 (depósito 600) y 496825 (retiro -540)."
+              }
+            },
+            {
+              "name": "Reporte Jose Lema — año 2024",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_cuenta}}/reportes?clienteId={{cliente_jose}}&desde=2024-01-01&hasta=2024-12-31",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["reportes"],
+                  "query": [
+                    {
+                      "key": "clienteId",
+                      "value": "{{cliente_jose}}"
+                    },
+                    {
+                      "key": "desde",
+                      "value": "2024-01-01"
+                    },
+                    {
+                      "key": "hasta",
+                      "value": "2024-12-31"
+                    }
+                  ]
+                },
+                "description": "Reporte de Jose Lema: cuenta 478758 con retiro -575. Cuenta 585545 sin movimientos en el período."
+              }
+            },
+            {
+              "name": "Reporte con defaults (sin fechas)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_cuenta}}/reportes?clienteId={{cliente_marianela}}",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["reportes"],
+                  "query": [
+                    {
+                      "key": "clienteId",
+                      "value": "{{cliente_marianela}}"
+                    }
+                  ]
+                },
+                "description": "Sin parámetros desde/hasta. El API usa defaults: inicio del año actual hasta hoy."
+              }
+            },
+            {
+              "name": "Reporte cliente inexistente (404)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_cuenta}}/reportes?clienteId=00000000-0000-0000-0099-000000000099",
+                  "host": ["{{base_cuenta}}"],
+                  "path": ["reportes"],
+                  "query": [
+                    {
+                      "key": "clienteId",
+                      "value": "00000000-0000-0000-0099-000000000099"
+                    }
+                  ]
+                },
+                "description": "Debe retornar 404 — cliente no encontrado en ClienteRef"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
