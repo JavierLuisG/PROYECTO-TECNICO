@@ -115,7 +115,7 @@ server:
 logging:
   level:
     root: WARN
-    com.msclient: INFO
+    com.ms_cliente: INFO
 
 ms-cuenta:
   url: http://ms-cuenta:8082

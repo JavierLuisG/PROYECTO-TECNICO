@@ -3,6 +3,8 @@ package com.ms_cliente.application.service;
 import com.ms_cliente.application.port.in.*;
 import com.ms_cliente.application.port.out.ClienteRepositoryPort;
 import com.ms_cliente.application.port.out.CuentaQueryPort;
+import com.ms_cliente.application.port.out.EventPublisherPort;
+import com.ms_cliente.domain.event.ClienteCreadoEvent;
 import com.ms_cliente.domain.exception.ClienteConCuentasException;
 import com.ms_cliente.domain.exception.ClienteNotFoundException;
 import com.ms_cliente.domain.model.Cliente;
@@ -25,6 +27,7 @@ public class ClienteService implements
 
     private final ClienteRepositoryPort clienteRepositoryPort;
     private final CuentaQueryPort cuentaQueryPort;
+    private final EventPublisherPort eventPublisherPort;
 
     @Override
     @Transactional
@@ -34,7 +37,13 @@ public class ClienteService implements
             throw new IllegalArgumentException(
                     "Ya existe un cliente con la identificacion: " + identificacion);
         }
-        return clienteRepositoryPort.save(cliente);
+        Cliente saved = clienteRepositoryPort.save(cliente);
+        eventPublisherPort.publishClienteCreado(new ClienteCreadoEvent(
+                saved.getClienteId().toString(),
+                saved.getPersona().getNombre(),
+                saved.getPersona().getIdentificacion()
+        ));
+        return saved;
     }
 
     @Override
