@@ -1,21 +1,18 @@
 package com.ms_cuenta.application.port.in;
 
-import com.ms_cuenta.domain.model.Cuenta;
-
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 public interface GenerarReporteUseCase {
 
     /**
-     * Devuelve las cuentas con sus movimientos filtrados por rango de fechas
-     * para el cliente indicado. El tipo de retorno exacto se refinará en US-04.
+     * Genera el estado de cuenta de un cliente para el rango de fechas indicado.
+     * Si {@code desde} o {@code hasta} son null, usa inicio del año en curso y hoy respectivamente.
      *
-     * @param clienteId UUID del cliente
-     * @param desde     fecha de inicio del rango (inclusive)
-     * @param hasta     fecha de fin del rango (inclusive)
-     * @return lista de cuentas del cliente que tuvieron actividad en el periodo
+     * @param clienteId UUID del cliente (debe existir en ClienteRef, si no → 404)
+     * @param desde     fecha de inicio del rango (inclusive), null = 1 de enero del año en curso
+     * @param hasta     fecha de fin del rango (inclusive), null = hoy
+     * @return reporte con nombre del cliente, sus cuentas y movimientos en el rango
      */
-    List<Cuenta> getCuentasConMovimientosPorCliente(UUID clienteId, LocalDate desde, LocalDate hasta);
+    ReporteResult generar(UUID clienteId, LocalDate desde, LocalDate hasta);
 }
