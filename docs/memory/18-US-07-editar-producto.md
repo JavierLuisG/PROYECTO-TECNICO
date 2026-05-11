@@ -1,8 +1,6 @@
 # US-07 — Formulario de Edición de Producto (Frontend)
 
-**Fecha implementación**: 2026-05-11  
-**Rama**: `feat/US-07-editar-producto` — Bloque 1  
-**Tarea**: US-07 (F5 deseable)
+**Fecha implementación**: 2026-05-11
 
 ---
 

@@ -1,8 +1,6 @@
 # TASK-19 — Tests Unitarios Frontend (Jest)
 
-**Fecha implementación**: 2026-05-11  
-**Rama**: `feat/US-07-editar-producto` — Bloque 2  
-**Tarea**: TASK-19
+**Fecha implementación**: 2026-05-11
 
 ---
 
