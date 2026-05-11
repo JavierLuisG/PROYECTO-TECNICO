@@ -44,6 +44,7 @@ export function ProductList({ products, loading, error }: ProductListProps) {
             <th className={styles.th}>Descripción</th>
             <th className={styles.th}>Fecha Liberación</th>
             <th className={styles.th}>Fecha Revisión</th>
+            <th className={styles.th}>Acciones</th>
           </tr>
         </thead>
         <tbody>

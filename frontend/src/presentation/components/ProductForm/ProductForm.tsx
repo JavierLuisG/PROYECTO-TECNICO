@@ -12,6 +12,7 @@ interface ProductFormProps {
   onIdBlur: () => Promise<void>;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   onReset: () => void;
+  submitLabel?: string;
 }
 
 export function ProductForm({
@@ -23,6 +24,7 @@ export function ProductForm({
   onIdBlur,
   onSubmit,
   onReset,
+  submitLabel = 'Agregar',
 }: ProductFormProps) {
   return (
     <form className={styles.form} onSubmit={onSubmit} noValidate>
@@ -141,7 +143,7 @@ export function ProductForm({
           className={styles.btnSubmit}
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Guardando...' : 'Agregar'}
+          {isSubmitting ? 'Guardando...' : submitLabel}
         </button>
       </div>
     </form>

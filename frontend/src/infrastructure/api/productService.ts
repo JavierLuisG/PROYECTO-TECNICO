@@ -34,6 +34,11 @@ export const productService = {
     await api.delete(`${PRODUCTS_PATH}/${id}`);
   },
 
+  async getById(id: string): Promise<Product> {
+    const response = await api.get<ProductResponse>(`${PRODUCTS_PATH}/${id}`);
+    return response.data.data;
+  },
+
   async verifyId(id: string): Promise<boolean> {
     const response = await api.get<boolean>(`${PRODUCTS_PATH}/verification/${id}`);
     return response.data;

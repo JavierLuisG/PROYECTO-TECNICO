@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Product } from '../../../domain/models/Product';
 import styles from './ProductCard.module.css';
 
@@ -24,6 +25,11 @@ export function ProductCard({ product }: ProductCardProps) {
       <td className={styles.cell}>{product.description}</td>
       <td className={styles.cell}>{product.date_release}</td>
       <td className={styles.cell}>{product.date_revision}</td>
+      <td className={styles.cell}>
+        <Link href={`/products/${product.id}/edit`} className={styles.btnEdit}>
+          Editar
+        </Link>
+      </td>
     </tr>
   );
 }
