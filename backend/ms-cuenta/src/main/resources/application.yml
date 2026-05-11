@@ -26,7 +26,11 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    # baseline-version: 0 → el baseline es anterior a V1, así V1 siempre se ejecuta.
+    # Sin esto, baseline-on-migrate ve las tablas de ms-cliente (persona, cliente)
+    # y crea un baseline en V1, saltándose la creación de cuenta/movimiento.
     baseline-on-migrate: true
+    baseline-version: 0
     validate-on-migrate: true
     # Tabla de historial propia para evitar conflicto con ms-cliente en la misma BD
     table: flyway_schema_history_cuenta
@@ -73,7 +77,7 @@ server:
 logging:
   level:
     root: INFO
-    com.mscuenta: DEBUG
+    com.ms_cuenta: DEBUG
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
   pattern:
@@ -111,4 +115,4 @@ server:
 logging:
   level:
     root: WARN
-    com.mscuenta: INFO
+    com.ms_cuenta: INFO
