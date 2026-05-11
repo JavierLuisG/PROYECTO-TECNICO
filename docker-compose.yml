@@ -92,6 +92,9 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_FLYWAY_ENABLED: "true"
       SPRING_FLYWAY_TABLE: flyway_schema_history_cuenta
+      # baseline-version "0" garantiza que V1 siempre se ejecute aunque el schema
+      # ya tenga tablas de ms-cliente (persona, cliente) en la BD compartida.
+      SPRING_FLYWAY_BASELINE_VERSION: "0"
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: guest
