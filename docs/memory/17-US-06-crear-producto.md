@@ -1,8 +1,6 @@
 # US-06 — Formulario de Creación de Producto (Frontend)
 
-**Fecha implementación**: 2026-05-11  
-**Rama**: `feat/US-06-crear-producto` — Bloque 1  
-**Tarea**: US-06 (F4)
+**Fecha implementación**: 2026-05-11
 
 ---
 
