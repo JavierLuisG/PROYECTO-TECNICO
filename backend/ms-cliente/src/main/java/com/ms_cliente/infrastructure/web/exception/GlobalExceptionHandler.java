@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -68,6 +69,19 @@ public class GlobalExceptionHandler {
                 status.value(),
                 status.getReasonPhrase(),
                 message,
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNoResource(NoResourceFoundException ex, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return new ErrorResponse(
+                LocalDateTime.now().toString(),
+                status.value(),
+                status.getReasonPhrase(),
+                "Recurso no encontrado: " + request.getRequestURI(),
                 request.getRequestURI()
         );
     }

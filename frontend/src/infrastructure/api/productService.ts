@@ -14,10 +14,22 @@ interface ProductResponse {
   data: Product;
 }
 
+function normalizeDate(value: string): string {
+  return value ? value.substring(0, 10) : value;
+}
+
+function normalizeProduct(p: Product): Product {
+  return {
+    ...p,
+    date_release: normalizeDate(p.date_release),
+    date_revision: normalizeDate(p.date_revision),
+  };
+}
+
 export const productService = {
   async getAll(): Promise<Product[]> {
     const response = await api.get<ProductsResponse>(PRODUCTS_PATH);
-    return response.data.data;
+    return response.data.data.map(normalizeProduct);
   },
 
   async create(payload: CreateProductPayload): Promise<Product> {
@@ -35,8 +47,8 @@ export const productService = {
   },
 
   async getById(id: string): Promise<Product> {
-    const response = await api.get<ProductResponse>(`${PRODUCTS_PATH}/${id}`);
-    return response.data.data;
+    const response = await api.get<Product>(`${PRODUCTS_PATH}/${id}`);
+    return normalizeProduct(response.data);
   },
 
   async verifyId(id: string): Promise<boolean> {

@@ -4,10 +4,11 @@ interface LinkProps {
   href: string;
   className?: string;
   children: React.ReactNode;
+  [key: string]: unknown;
 }
 
-const MockLink = ({ href, children, className }: LinkProps) => (
-  <a href={href} className={className}>
+const MockLink = ({ href, children, className, ...rest }: LinkProps) => (
+  <a href={href} className={className} {...rest}>
     {children}
   </a>
 );

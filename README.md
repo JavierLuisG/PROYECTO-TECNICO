@@ -9,7 +9,7 @@ Aplicación bancaria completa con arquitectura de microservicios (backend Spring
 | MS-Cliente | Spring Boot 4.0.6 + Java 21 | 8081 |
 | MS-Cuenta | Spring Boot 4.0.6 + Java 21 | 8082 |
 | Frontend | Next.js 16 + React 19 + TypeScript | 3000 |
-| Mock API (productos) | Node.js + Express | 3002 |
+| repo-interview-main (productos) | Node.js + TypeScript | 3002 |
 | PostgreSQL | PostgreSQL 16 | 5432 |
 | RabbitMQ | RabbitMQ 3.13 | 5672 / 15672 |
 
@@ -41,8 +41,9 @@ Los contenedores levantan en este orden:
 1. `banco-postgres` + `banco-rabbitmq` (infraestructura)
 2. `ms-cliente` (espera a que postgres esté healthy)
 3. `ms-cuenta` (espera a que ms-cliente esté healthy — evita race condition de Flyway)
-4. `banco-mock-api` (API de productos para el frontend)
-5. `banco-frontend` (espera a que mock-api esté disponible)
+4. `banco-frontend`
+
+> `repo-interview-main` **no se dockeriza** — debe ejecutarse localmente antes de levantar el frontend (ver sección [API de Productos](#api-de-productos--repo-interview-main)).
 
 Flyway ejecuta automáticamente las migraciones al iniciar cada microservicio.
 
@@ -84,12 +85,12 @@ proyecto-tecnico/
 ├── backend/
 │   ├── ms-cliente/             # Microservicio de clientes (puerto 8081)
 │   ├── ms-cuenta/              # Microservicio de cuentas y movimientos (puerto 8082)
-│   ├── mock-api/               # API Node.js de productos para el frontend (puerto 3002)
 │   └── BaseDatos.sql           # Dump completo de PostgreSQL (schema + datos)
 ├── frontend/                   # Aplicación Next.js (puerto 3000)
+├── repo-interview-main/        # API Node.js de productos provista por el ejercicio (ejecutar localmente, puerto 3002)
 ├── docs/
 │   ├── API_BACKEND.md          # Endpoints de MS-Cliente y MS-Cuenta
-│   ├── API_FRONTEND.md         # Endpoints del Mock API de productos
+│   ├── API_FRONTEND.md         # Endpoints de la API repo-interview-main de productos
 │   ├── ARCHITECTURE.md         # Arquitectura hexagonal, flujos async
 │   ├── DB.md                   # Schema de base de datos
 │   └── user-stories/           # Especificaciones US-01 a US-07
@@ -156,9 +157,15 @@ El archivo `postman_collection.json` contiene todos los requests organizados en 
 
 ---
 
-## Mock API de Productos (Frontend)
+## API de Productos — repo-interview-main
 
-El ejercicio técnico del frontend requiere un backend Node.js que sirva el catálogo de productos financieros. Este servicio está incluido en `docker-compose.yml` como `mock-api` en el puerto **3002**.
+El ejercicio técnico del frontend requiere un backend Node.js que sirva el catálogo de productos financieros. Este servidor está provisto por el ejercicio en la carpeta `repo-interview-main` y se ejecuta **localmente** en el puerto **3002** — no se incluye en Docker Compose.
+
+```bash
+cd repo-interview-main
+npm install
+npm run start:dev   # http://localhost:3002
+```
 
 | Método | Endpoint | Descripción |
 |---|---|---|
@@ -249,8 +256,8 @@ cd backend/ms-cuenta  && ./gradlew bootRun
 ### Frontend
 
 ```bash
-# Requisitos: Node.js 20, mock-api corriendo en localhost:3002
-# (o levantar solo mock-api con: docker compose up mock-api -d)
+# Requisitos: Node.js 20, repo-interview-main corriendo en localhost:3002
+# (ver sección "API de Productos" para iniciarlo)
 
 cd frontend
 npm install
@@ -266,5 +273,5 @@ npm run dev         # http://localhost:3000
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Arquitectura hexagonal, flujos async RabbitMQ, decisiones de diseño |
 | [docs/DB.md](docs/DB.md) | Schema de tablas, relaciones, índices |
 | [docs/API_BACKEND.md](docs/API_BACKEND.md) | Endpoints completos con ejemplos de request/response |
-| [docs/API_FRONTEND.md](docs/API_FRONTEND.md) | Endpoints del Mock API de productos |
+| [docs/API_FRONTEND.md](docs/API_FRONTEND.md) | Endpoints de la API repo-interview-main de productos |
 | [docs/user-stories/](docs/user-stories/) | Especificaciones US-01 a US-07 con criterios Gherkin |

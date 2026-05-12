@@ -61,12 +61,12 @@ describe('ProductList — con productos', () => {
     expect(screen.getByText('Acciones')).toBeInTheDocument();
   });
 
-  it('renderiza enlace de edición para cada producto', () => {
+  it('renderiza enlace de navegación al detalle para cada producto', () => {
     render(<ProductList products={mockProducts} loading={false} error={null} />);
-    const editLinks = screen.getAllByRole('link', { name: 'Editar' });
-    expect(editLinks).toHaveLength(2);
-    expect(editLinks[0]).toHaveAttribute('href', '/products/trj-crd/edit');
-    expect(editLinks[1]).toHaveAttribute('href', '/products/seg-vida/edit');
+    const navLinks = screen.getAllByRole('link', { name: /Ver detalle de/i });
+    expect(navLinks).toHaveLength(2);
+    expect(navLinks[0]).toHaveAttribute('href', '/products/trj-crd');
+    expect(navLinks[1]).toHaveAttribute('href', '/products/seg-vida');
   });
 });
 
@@ -117,7 +117,7 @@ describe('ProductCard', () => {
     expect(screen.getByText('—')).toBeInTheDocument();
   });
 
-  it('incluye el enlace de edición con href correcto', () => {
+  it('incluye el enlace de navegación al detalle con href correcto', () => {
     render(
       <table>
         <tbody>
@@ -125,10 +125,9 @@ describe('ProductCard', () => {
         </tbody>
       </table>,
     );
-    expect(screen.getByRole('link', { name: 'Editar' })).toHaveAttribute(
-      'href',
-      '/products/trj-crd/edit',
-    );
+    expect(
+      screen.getByRole('link', { name: /Ver detalle de Tarjetas de Crédito/i }),
+    ).toHaveAttribute('href', '/products/trj-crd');
   });
 });
 

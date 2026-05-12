@@ -11,6 +11,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -65,6 +66,13 @@ public class GlobalExceptionHandler {
                 "errors", errors,
                 "path", req.getRequestURI()
         );
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNoResource(NoResourceFoundException ex, HttpServletRequest req) {
+        return new ErrorResponse(LocalDateTime.now(), 404, "Not Found",
+                "Recurso no encontrado: " + req.getRequestURI(), req.getRequestURI());
     }
 
     @ExceptionHandler(Exception.class)
