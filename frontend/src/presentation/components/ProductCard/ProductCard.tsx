@@ -26,8 +26,8 @@ export function ProductCard({ product }: ProductCardProps) {
       <td className={styles.cell}>{product.date_release}</td>
       <td className={styles.cell}>{product.date_revision}</td>
       <td className={styles.cell}>
-        <Link href={`/products/${product.id}/edit`} className={styles.btnEdit}>
-          Editar
+        <Link href={`/products/${product.id}`} className={styles.btnNav} aria-label={`Ver detalle de ${product.name}`}>
+          &gt;
         </Link>
       </td>
     </tr>
