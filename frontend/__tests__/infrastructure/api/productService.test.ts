@@ -54,7 +54,7 @@ describe('productService.getAll', () => {
 
 describe('productService.getById', () => {
   it('returns a single product', async () => {
-    api.get.mockResolvedValue({ data: { data: mockProduct } });
+    api.get.mockResolvedValue({ data: mockProduct });
     const result = await productService.getById('trj-crd');
     expect(result).toEqual(mockProduct);
     expect(api.get).toHaveBeenCalledWith('/bp/products/trj-crd');
