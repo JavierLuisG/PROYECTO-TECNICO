@@ -68,7 +68,7 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8081/ 2>&1; exit 0"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8081/api/clientes 2>&1; exit 0"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -108,7 +108,7 @@ services:
       ms-cliente:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8082/ 2>&1; exit 0"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8082/api/cuentas 2>&1; exit 0"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -116,37 +116,19 @@ services:
       - banco-network
     restart: unless-stopped
 
-  # Mock API Node.js de productos financieros (puerto 3002)
-  mock-api:
-    build:
-      context: ./backend/mock-api
-      dockerfile: Dockerfile
-    container_name: banco-mock-api
-    ports:
-      - "3002:3002"
-    networks:
-      - banco-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:3002/bp/products 2>&1; exit 0"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-
   # Frontend Next.js (puerto 3000)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:3002
     container_name: banco-frontend
     ports:
       - "3000:3000"
-    environment:
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:3002
     depends_on:
       - ms-cliente
       - ms-cuenta
-      - mock-api
     networks:
       - banco-network
     restart: unless-stopped

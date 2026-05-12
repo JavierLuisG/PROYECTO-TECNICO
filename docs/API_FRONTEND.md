@@ -156,7 +156,7 @@ Usado en el formulario de creación para validar que el ID no esté ya registrad
 | Campo | Tipo | Descripción |
 |---|---|---|
 | `id` | String (3-10 chars) | Identificador único |
-| `name` | String (5-100 chars) | Nombre del producto |
+| `name` | String (6-100 chars) | Nombre del producto |
 | `description` | String (10-200 chars) | Descripción |
 | `logo` | String (URL) | URL del logo |
 | `date_release` | Date (YYYY-MM-DD) | Fecha de lanzamiento (≥ hoy) |
@@ -167,7 +167,7 @@ Usado en el formulario de creación para validar que el ID no esté ya registrad
 | Campo | Regla |
 |---|---|
 | `id` | Requerido, 3-10 chars, no debe existir (verificar con `/verification/:id`) |
-| `name` | Requerido, 5-100 chars |
+| `name` | Requerido, 6-100 chars |
 | `description` | Requerido, 10-200 chars |
 | `logo` | Requerido |
 | `date_release` | Requerido, fecha ≥ hoy |

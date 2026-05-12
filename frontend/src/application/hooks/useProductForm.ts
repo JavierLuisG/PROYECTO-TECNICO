@@ -42,7 +42,7 @@ function validateField(name: keyof ProductFormValues, value: string): string {
       return '';
     case 'name':
       if (!value.trim()) return 'Nombre es requerido';
-      if (value.length < 5) return 'Nombre no válido. Mínimo 5 caracteres';
+      if (value.length < 6) return 'Nombre no válido. Mínimo 6 caracteres';
       if (value.length > 100) return 'Nombre no válido. Máximo 100 caracteres';
       return '';
     case 'description':
@@ -146,7 +146,7 @@ export function useProductForm({
     try {
       await onSuccess(values);
     } catch {
-      setErrors((prev) => ({ ...prev, submit: 'No se pudo crear el producto. Intenta de nuevo.' }));
+      setErrors((prev) => ({ ...prev, submit: 'No se pudo guardar el producto. Intenta de nuevo.' }));
     } finally {
       setIsSubmitting(false);
     }

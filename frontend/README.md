@@ -3,7 +3,7 @@
 Aplicación **Next.js 16.2.6** con **React 19** y **TypeScript 5** siguiendo **arquitectura limpia por capas**.
 
 **Puerto**: 3000  
-Consume el Mock API de productos en `http://localhost:3002` (incluido en Docker Compose como servicio `mock-api`).
+Consume la API de productos `repo-interview-main` en `http://localhost:3002` (ejecutar localmente — no dockerizada).
 
 ---
 
@@ -95,7 +95,7 @@ frontend/
 | Campo | Reglas |
 |---|---|
 | `id` | Requerido · 3–10 chars · no debe existir (verificado vía `GET /bp/products/verification/:id` al perder foco) |
-| `name` | Requerido · 5–100 chars |
+| `name` | Requerido · 6–100 chars |
 | `description` | Requerido · 10–200 chars |
 | `logo` | Requerido |
 | `date_release` | Requerido · fecha ≥ hoy |
@@ -107,7 +107,7 @@ En modo edición (F5) el campo `id` está deshabilitado y no se verifica unicida
 
 ## API que consume
 
-Mock API Node.js incluido en Docker Compose (`mock-api`, puerto **3002**).
+API Node.js `repo-interview-main` (no dockerizada, ejecutar localmente en puerto **3002**).
 
 | Método | Endpoint | Descripción |
 |---|---|---|
@@ -147,20 +147,28 @@ npm run test:coverage       # con reporte de cobertura (umbral ≥ 70%)
 
 ## Levantar
 
-### Con Docker Compose (recomendado)
+### Con Docker Compose
 
 ```bash
-# Desde la raíz del proyecto:
-docker compose up frontend mock-api -d
+# 1. Iniciar repo-interview-main (en otra terminal, desde la raíz del proyecto):
+cd repo-interview-main
+npm install
+npm run start:dev   # http://localhost:3002
+
+# 2. Levantar el frontend con Docker:
+docker compose up frontend -d
 # Frontend disponible en http://localhost:3000
 ```
 
 ### Local sin Docker
 
 ```bash
-# Primero levantar el mock-api (o arrancarlo vía Docker):
-docker compose up mock-api -d
+# 1. Iniciar repo-interview-main (en otra terminal):
+cd repo-interview-main
+npm install
+npm run start:dev   # http://localhost:3002
 
+# 2. Iniciar el frontend:
 cd frontend
 npm install
 npm run dev         # http://localhost:3000
