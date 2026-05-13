@@ -1,17 +1,21 @@
 # Sistema Bancario — Prueba Técnica SemiSenior
 
-Aplicación bancaria completa con arquitectura de microservicios (backend Spring Boot) y catálogo de productos financieros (frontend Next.js).
+Aplicación bancaria completa con arquitectura de microservicios (backend Spring Boot) y catálogo de productos financieros (frontend Next.js + React Native/Expo).
 
-## Arquitectura
+## Mapa de puertos
 
-| Componente | Tecnología | Puerto |
-|---|---|---|
-| MS-Cliente | Spring Boot 4.0.6 + Java 21 | 8081 |
-| MS-Cuenta | Spring Boot 4.0.6 + Java 21 | 8082 |
-| Frontend | Next.js 16 + React 19 + TypeScript | 3000 |
-| repo-interview-main (productos) | Node.js + TypeScript | 3002 |
-| PostgreSQL | PostgreSQL 16 | 5432 |
-| RabbitMQ | RabbitMQ 3.13 | 5672 / 15672 |
+| Servicio | Tecnología | Puerto | Modo de arranque |
+|---|---|---|---|
+| MS-Cliente | Spring Boot 4.0.6 + Java 21 | **8081** | Docker Compose |
+| MS-Cuenta | Spring Boot 4.0.6 + Java 21 | **8082** | Docker Compose |
+| Frontend Next.js | Next.js 16 + React 19 | **3000** | Docker Compose |
+| PostgreSQL | PostgreSQL 16 | **5432** | Docker Compose |
+| RabbitMQ AMQP | RabbitMQ 3.13 | **5672** | Docker Compose |
+| RabbitMQ Management UI | RabbitMQ 3.13 | **15672** | Docker Compose |
+| repo-interview-main | Node.js + TypeScript | **3002** | Local |
+| Frontend React Native (Expo Metro) | React Native 0.81 + Expo SDK 54 | **8083** | Local |
+
+> **Sin conflictos de puertos**: Expo Metro se configuró en el **8083** para evitar colisión con ms-cliente (8081).
 
 Los dos microservicios backend siguen **arquitectura hexagonal (DDD)** y se comunican de forma asincrónica a través de RabbitMQ.
 
@@ -83,17 +87,18 @@ proyecto-tecnico/
 ├── .github/workflows/
 │   └── ci.yml                  # Pipeline CI — GitHub Actions
 ├── backend/
-│   ├── ms-cliente/             # Microservicio de clientes (puerto 8081)
-│   ├── ms-cuenta/              # Microservicio de cuentas y movimientos (puerto 8082)
+│   ├── ms-cliente/             # Microservicio de clientes       → :8081 (Docker)
+│   ├── ms-cuenta/              # Microservicio de cuentas        → :8082 (Docker)
 │   └── BaseDatos.sql           # Dump completo de PostgreSQL (schema + datos)
-├── frontend/                   # Aplicación Next.js (puerto 3000)
-├── repo-interview-main/        # API Node.js de productos provista por el ejercicio (ejecutar localmente, puerto 3002)
+├── frontend/                   # Aplicación Next.js              → :3000 (Docker)
+├── frontend-rn/                # Aplicación React Native/Expo    → :8083 metro (local)
+├── repo-interview-main/        # API Node.js de productos        → :3002 (local)
 ├── docs/
 │   ├── API_BACKEND.md          # Endpoints de MS-Cliente y MS-Cuenta
 │   ├── API_FRONTEND.md         # Endpoints de la API repo-interview-main de productos
 │   ├── ARCHITECTURE.md         # Arquitectura hexagonal, flujos async
 │   ├── DB.md                   # Schema de base de datos
-│   └── user-stories/           # Especificaciones US-01 a US-07
+│   └── user-stories/           # Especificaciones US-01 a US-08
 ├── postman_collection.json     # Colección Postman con todos los casos del ejercicio
 └── docker-compose.yml
 ```
@@ -194,16 +199,25 @@ cd backend/ms-cuenta && ./gradlew test
 
 Los tests de backend usan **H2 en memoria** (perfil `test`) — no requieren PostgreSQL ni RabbitMQ.
 
-### Frontend (Jest + React Testing Library)
+### Frontend Next.js (Jest + React Testing Library)
 
 ```bash
 cd frontend
-
-npm test                  # Ejecutar todos los tests
-npm run test:coverage     # Ejecutar con reporte de cobertura (≥ 70%)
+npm test                  # 74 tests
+npm run test:coverage     # Cobertura ≥ 70%
 ```
 
 Cobertura actual: **94%** statements · **92%** branches.
+
+### Frontend React Native (Jest + React Native Testing Library)
+
+```bash
+cd frontend-rn
+npm test                  # 57 tests
+npm run test:coverage     # Cobertura ≥ 70%
+```
+
+Cobertura actual: **86%** statements · **76%** branches · **80%** functions.
 
 ---
 
@@ -247,21 +261,31 @@ docker exec -i banco-postgres psql -U postgres banco_db < backend/BaseDatos.sql
 ### Backend
 
 ```bash
-# Requisitos: Java 21, PostgreSQL 16 corriendo en localhost:5432, RabbitMQ en localhost:5672
+# Requisitos: Java 21, PostgreSQL 16 en localhost:5432, RabbitMQ en localhost:5672
 
-cd backend/ms-cliente && ./gradlew bootRun
-cd backend/ms-cuenta  && ./gradlew bootRun
+cd backend/ms-cliente && ./gradlew bootRun   # → :8081
+cd backend/ms-cuenta  && ./gradlew bootRun   # → :8082
 ```
 
-### Frontend
+### Frontend Next.js
 
 ```bash
 # Requisitos: Node.js 20, repo-interview-main corriendo en localhost:3002
-# (ver sección "API de Productos" para iniciarlo)
 
 cd frontend
 npm install
-npm run dev         # http://localhost:3000
+npm run dev         # → http://localhost:3000
+```
+
+### Frontend React Native (Expo)
+
+```bash
+# Requisitos: Node.js 20, repo-interview-main corriendo en localhost:3002
+# Puerto 8083 (Metro) — no colisiona con ms-cliente (:8081)
+
+cd frontend-rn
+npm install
+npm start           # → Metro en :8083 — presionar i (iOS) o a (Android)
 ```
 
 ---
